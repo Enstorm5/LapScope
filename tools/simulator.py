@@ -68,6 +68,19 @@ def corner_speed(curvature: float, pace: float) -> float:
     return min(V_STRAIGHT, math.sqrt(GRIP_LAT / curvature)) * pace
 
 
+# open winding road for point-to-point events: heading oscillates gently, so
+# the course never returns to its start (unlike the stadium loop - a looping
+# "sprint" would trip the geometric WTA lap detection, which real
+# point-to-point events cannot do)
+SPRINT_WAVE = 0.9      # heading amplitude (rad)
+SPRINT_PERIOD = 230.0  # meters per heading swing
+
+
+def sprint_curv(s: float) -> float:
+    """Signed curvature dθ/ds of the open course at arc length s."""
+    return SPRINT_WAVE / SPRINT_PERIOD * math.cos(s / SPRINT_PERIOD)
+
+
 JUMPS = False  # set by --jumps: sharp elevation spikes like cross-country jumps
 JUMP_BUMPS = ((300.0, 25.0, 11.0), (1500.0, 30.0, 16.0))  # center, width, height
 
@@ -100,12 +113,17 @@ class Sim:
         self.sent = 0
         self.t0 = time.monotonic()
 
+    open_course = False   # sprint mode: winding road instead of the loop
+
+    def _curv(self, s: float) -> float:
+        return abs(sprint_curv(s)) if self.open_course else track_point(s)[3]
+
     def _pace_tick(self) -> None:
         """Advance physics one dt."""
-        _, _, _, curv = track_point(self.s)
+        curv = self._curv(self.s)
         min_v = corner_speed(curv, self.pace)
         for look in (60.0, 120.0, BRAKE_LOOKAHEAD):
-            _, _, _, c_ahead = track_point(self.s + look)
+            c_ahead = self._curv(self.s + look)
             min_v = min(min_v, corner_speed(c_ahead, self.pace) + look / 18.0)
         if self.v < min_v - 0.5:
             self.lon_a = min(ACCEL_MAX, (min_v - self.v) * 0.8)
@@ -124,7 +142,16 @@ class Sim:
     def _send(self, race_time: float, lap_no: int, cur_lap: float,
               last: float, best: float) -> None:
         f = self.f
-        x, z, heading, curv = track_point(self.s)
+        if self.open_course:
+            heading = SPRINT_WAVE * math.sin(self.s / SPRINT_PERIOD)
+            curv = sprint_curv(self.s)
+            ds = self.s - self._oc_s
+            self._oc_x += ds * math.cos(heading)
+            self._oc_z += ds * math.sin(heading)
+            self._oc_s = self.s
+            x, z = self._oc_x, self._oc_z
+        else:
+            x, z, heading, curv = track_point(self.s)
         lat_a = self.v * self.v * curv
         if self.impact_frames > 0:  # wall contact: brief violent lateral spike
             self.impact_frames -= 1
@@ -252,6 +279,8 @@ class Sim:
         finish line."""
         print(f"sprint: ~{seconds:.0f}s point-to-point (no lap counter)")
         self.s = 0.0
+        self.open_course = True
+        self._oc_x, self._oc_z, self._oc_s = -STRAIGHT / 2, -RADIUS, 0.0
         self.pace = random.uniform(0.97, 1.0)
         t = 0.0
         while t < seconds:
