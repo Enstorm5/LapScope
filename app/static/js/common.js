@@ -36,9 +36,11 @@ function condBadge(cond) {
 const TRACK_META = {
   road: ["🛣️", "Road"],
   street: ["🏙️", "Street"],
+  touge: ["⛰️", "Touge"],
   dirt: ["🟫", "Dirt"],
   cross: ["🏞️", "Cross-Country"],
   drag: ["🏁", "Drag"],
+  wtc: ["⏱️", "WTC"],
 };
 
 function trackBadge(type) {

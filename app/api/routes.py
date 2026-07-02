@@ -17,7 +17,7 @@ router = APIRouter()
 
 CAR_CLASSES = ["D", "C", "B", "A", "S1", "S2", "X", "X"]
 CONDITIONS = {"dry", "wet", "snow", "dirt"}
-TRACK_TYPES = {"road", "street", "dirt", "cross", "drag"}
+TRACK_TYPES = {"road", "street", "touge", "dirt", "cross", "drag", "wtc"}
 DRIVETRAINS = ["FWD", "RWD", "AWD"]
 
 # community-maintained FH6 list, {"1987 Porsche 959": "269", ...} -> {269: name}
