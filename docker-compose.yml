@@ -1,0 +1,10 @@
+services:
+  forzacalibrator:
+    build: .
+    container_name: forzacalibrator
+    ports:
+      - "8000:8000"        # web dashboard: http://localhost:8000
+      - "9999:9999/udp"    # FH6 Data Out target port
+    volumes:
+      - ./data:/app/data   # SQLite session recordings
+    restart: unless-stopped

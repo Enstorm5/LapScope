@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ForzaCalibrator — Live</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M2 12 6 3h3L5 12z' fill='%2300d4ff'/><path d='M7 12 11 3h3l-4 9z' fill='%23ff3d7f'/></svg>">
+<link rel="stylesheet" href="css/fonts.css">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header>
+  <div class="brand"><i></i>FORZA<span>CALIBRATOR</span></div>
+  <nav>
+    <a class="active" href="index.html">Live</a>
+    <a href="analysis.html">Analysis</a>
+  </nav>
+  <div id="car-chip" class="chip" style="display:none"></div>
+  <div id="conn" class="chip"><i class="dot"></i><span>connecting…</span></div>
+  <div id="unit-toggle" class="chip clickable" title="Toggle units">km/h</div>
+</header>
+
+<div id="nodata" class="overlay hidden">
+  <div class="box">
+    <div class="pulse-ring"><i></i></div>
+    <h3>Waiting for telemetry</h3>
+    <p>In Forza Horizon 6 open <b>Settings → HUD and Gameplay</b> and set:</p>
+    <p class="setup-lines">
+      Data Out <code>ON</code><br>
+      Data Out IP Address <code>127.0.0.1</code><br>
+      Data Out IP Port <code id="nd-port">9999</code>
+    </p>
+    <p>Then drive — telemetry is not sent while in menus.
+       If nothing arrives, try your PC's LAN IP instead of 127.0.0.1
+       (see the README's loopback troubleshooting).</p>
+    <div class="stat" id="nd-stat">server: waiting for first packet…</div>
+  </div>
+</div>
+
+<main class="grid">
+  <section class="panel cluster span7">
+    <div id="shift-lights"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    <div class="cluster-flex">
+      <canvas id="rpm"></canvas>
+      <div class="speed-block">
+        <div id="speed">0</div>
+        <div id="speed-unit">km/h</div>
+        <div class="mini-row">
+          <span><b id="power">0</b><em>kW</em></span>
+          <span><b id="boost">0.0</b><em>psi</em></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel span5">
+    <h2>Lap · delta to session best</h2>
+    <div id="delta">—</div>
+    <div class="lap-grid">
+      <div><div class="label">Current</div><div class="value" id="lap-cur">–:--.---</div></div>
+      <div><div class="label">Last</div><div class="value" id="lap-last">–:--.---</div></div>
+      <div><div class="label">Session best</div><div class="value" id="lap-best">–:--.---</div></div>
+      <div><div class="label">Lap / Pos</div><div class="value" id="lap-no">– / –</div></div>
+    </div>
+  </section>
+
+  <section class="panel span4">
+    <h2>Friction circle</h2>
+    <canvas id="friction"></canvas>
+    <div class="g-readout">
+      <span>Lat <b id="latg">0.00</b> g</span>
+      <span>Lon <b id="long">0.00</b> g</span>
+      <span>Total <b id="totg">0.00</b> g</span>
+    </div>
+  </section>
+
+  <section class="panel span4">
+    <h2>Tire grip</h2>
+    <canvas id="grip"></canvas>
+    <div id="balance" class="balance">—</div>
+  </section>
+
+  <section class="panel span4">
+    <h2>Inputs</h2>
+    <div class="inputs-flex">
+      <div class="vbar">
+        <div class="vbar-track"><div id="bar-th" class="vbar-fill th"></div></div>
+        <b id="thr-val">0</b><span>THR</span>
+      </div>
+      <div class="vbar">
+        <div class="vbar-track"><div id="bar-br" class="vbar-fill br"></div></div>
+        <b id="brk-val">0</b><span>BRK</span>
+      </div>
+      <div class="steer-col">
+        <div class="steer-track"><i class="notch"></i><div id="steer-ind"></div></div>
+        <span>STEERING</span>
+        <div class="gear-mini">Gear <b id="gear-mini">–</b></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel span12">
+    <h2>Input trace — <span class="lg-th">throttle</span> · <span class="lg-br">brake</span> · <span class="lg-st">steering</span></h2>
+    <canvas id="strip"></canvas>
+  </section>
+</main>
+
+<script src="js/common.js"></script>
+<script src="js/gauges.js"></script>
+<script src="js/dashboard.js"></script>
+</body>
+</html>

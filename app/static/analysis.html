@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ForzaCalibrator — Analysis</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M2 12 6 3h3L5 12z' fill='%2300d4ff'/><path d='M7 12 11 3h3l-4 9z' fill='%23ff3d7f'/></svg>">
+<link rel="stylesheet" href="css/uplot.min.css">
+<link rel="stylesheet" href="css/fonts.css">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header>
+  <div class="brand"><i></i>FORZA<span>CALIBRATOR</span></div>
+  <nav>
+    <a href="index.html">Live</a>
+    <a class="active" href="analysis.html">Analysis</a>
+  </nav>
+  <div class="chip" id="hint">pick a session, then tag laps A and B to compare</div>
+</header>
+
+<div class="analysis-layout">
+  <aside id="session-list"><div class="empty-hint">loading…</div></aside>
+
+  <div class="detail" id="detail">
+    <div class="empty-hint">No session selected. Drive with Data Out enabled (or run the
+      simulator) and sessions will appear on the left.</div>
+  </div>
+</div>
+
+<template id="detail-template">
+  <div>
+    <div class="detail-header">
+      <h1 id="session-title"></h1>
+      <span id="header-badges"></span>
+      <select id="track-select" title="Track type">
+        <option value="road">🛣️ Road</option>
+        <option value="street">🏙️ Street</option>
+        <option value="dirt">🟫 Dirt</option>
+        <option value="cross">🏞️ Cross-Country</option>
+        <option value="drag">🏁 Drag</option>
+      </select>
+      <select id="cond-select" title="Track conditions">
+        <option value="dry">☀️ Dry</option>
+        <option value="wet">🌧️ Wet</option>
+        <option value="snow">❄️ Snow</option>
+        <option value="dirt">🟤 Dirt</option>
+      </select>
+      <button id="btn-rename">Rename</button>
+      <button id="btn-route">Name route</button>
+      <button id="btn-car">Name car</button>
+      <button id="btn-delete" class="danger">Delete</button>
+    </div>
+    <div class="car-line" id="header-car"></div>
+    <section class="panel">
+      <h2>Laps</h2>
+      <table class="laps">
+        <thead><tr><th>Compare</th><th>Lap</th><th>Time</th><th>Gap</th><th></th></tr></thead>
+        <tbody id="lap-rows"></tbody>
+      </table>
+    </section>
+    <section class="panel">
+      <h2>Track map</h2>
+      <div class="map-row">
+        <div>
+          <canvas id="trackmap"></canvas>
+          <div class="legend">
+            <span class="seg" id="map-mode">
+              <button data-mode="2d">2D</button><button data-mode="3d">3D</button>
+            </span>
+            <span>Color:
+              <select id="color-mode">
+                <option value="speed">speed</option>
+                <option value="slip">tire slip</option>
+              </select>
+            </span>
+            <span id="legend-scale"></span>
+            <span><span class="swatch" style="background:#5b6675"></span> lap B</span>
+            <span><span class="swatch" style="background:#34d399"></span> start</span>
+            <span id="map-hint" style="display:none">↔ drag the map to rotate</span>
+          </div>
+        </div>
+        <div id="map-side" class="empty-hint">Tag a lap as <b>A</b> to draw its racing line.</div>
+      </div>
+    </section>
+    <section class="panel">
+      <h2>Lap comparison <span id="cmp-label" style="text-transform:none"></span></h2>
+      <div class="charts" id="charts"><div class="empty-hint">Tag lap A (and optionally B) above.</div></div>
+    </section>
+  </div>
+</template>
+
+<script src="js/vendor/uplot.iife.min.js"></script>
+<script src="js/common.js"></script>
+<script src="js/analysis.js"></script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+- git init local repo to follow versioning
+- create AGENTS.md for generic knowledge and patterns on the repo
+- comopact current session
+- Doesn't catch last laps of actual races. This is not a problem on rivals ofc
+- Sprint races are not caught, probably same reason with last lap of actual races. there are no laps, point to point finish.
+    - this is also a problem on other types like touge, drag, street races etc.. 
+- Jumps are problem for 3D view. sometimes you jump too far, sometimes less. incosistent Y axis gives problems. especially for Cross Country races which usually have a lot of big jumps
+- Track type should be shown since it matters most of the time. if not available as data, same fix with weather data can be applied (with a dropdown)
+- wheel type data exist on api, AWD, RWD etc should be shown
+- user dialog uses browser type. show a proper modal for delete, rename etc. it should be fitting the theme
+- background improvement idea. have a gradient soft color transitions on 3-4 different point toward each other without creating a big distraction but giving appeal
+- on "Live" section, the graphs / diagrams etc are not centered on their respective boxes. creating a distraction
+- Shift lights on top of the first section on "Live" page is cutting of the dial underneath. proper height and padding / margin sould be applied.

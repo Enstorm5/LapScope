@@ -1,0 +1,238 @@
+/* Canvas drawing for the live dashboard: RPM arc, friction circle,
+   tire grip diagram, input strip chart. All draw* functions are pure
+   renders of the state passed in. */
+
+const DPR = window.devicePixelRatio || 1;
+
+function initCanvas(id, cssW, cssH) {
+  const c = document.getElementById(id);
+  c.width = cssW * DPR;
+  c.height = cssH * DPR;
+  c.style.width = cssW + "px";
+  c.style.height = cssH + "px";
+  const ctx = c.getContext("2d");
+  ctx.scale(DPR, DPR);
+  return { ctx, w: cssW, h: cssH };
+}
+
+const COL = {
+  muted: "#8494a7", text: "#e8eef6", accent: "#00d4ff",
+  good: "#2fe6a8", warn: "#ffbe3d", bad: "#ff5d5d",
+  grid: "#1c2634", dim: "#3a475c99",
+};
+const FONT = "Rajdhani, 'Segoe UI', sans-serif";
+
+/* slip 0 -> green, ~1 -> amber, >1.15 -> red */
+function slipColor(s) {
+  const hue = Math.max(0, Math.min(120, 120 * (1.15 - s) / 1.15));
+  return `hsl(${hue}, 75%, 55%)`;
+}
+
+function glow(ctx, color, blur, fn) {
+  ctx.save();
+  ctx.shadowColor = color;
+  ctx.shadowBlur = blur;
+  fn();
+  ctx.restore();
+}
+
+function drawRpm(g, rpm, maxRpm, idleRpm, gear) {
+  const { ctx, w, h } = g;
+  ctx.clearRect(0, 0, w, h);
+  const cx = w / 2, cy = h * 0.6, r = Math.min(w, h * 1.5) / 2 - 12;
+  const a0 = Math.PI * 0.75, a1 = Math.PI * 2.25;
+  const max = maxRpm > 0 ? maxRpm : 8000;
+  const frac = Math.max(0, Math.min(1, rpm / max));
+  const redFrac = 0.9;
+
+  ctx.lineWidth = 13;
+  ctx.lineCap = "round";
+  // track + redline zone
+  ctx.strokeStyle = "#151d29";
+  ctx.beginPath(); ctx.arc(cx, cy, r, a0, a1); ctx.stroke();
+  ctx.strokeStyle = "#4b1f26";
+  ctx.beginPath(); ctx.arc(cx, cy, r, a0 + (a1 - a0) * redFrac, a1); ctx.stroke();
+  // value arc with glow
+  if (frac > 0.005) {
+    const col = frac > redFrac ? COL.bad : (frac > 0.78 ? COL.warn : COL.accent);
+    glow(ctx, col, 14, () => {
+      ctx.strokeStyle = col;
+      ctx.beginPath(); ctx.arc(cx, cy, r, a0, a0 + (a1 - a0) * frac); ctx.stroke();
+    });
+  }
+  // ticks each 500 rpm, numerals each 1000
+  ctx.lineWidth = 1.5;
+  ctx.strokeStyle = COL.muted;
+  ctx.fillStyle = COL.muted;
+  ctx.font = `600 11px ${FONT}`;
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  for (let v = 0; v <= max; v += 500) {
+    const a = a0 + (a1 - a0) * (v / max);
+    const major = v % 1000 === 0;
+    ctx.globalAlpha = major ? 1 : 0.4;
+    ctx.beginPath();
+    ctx.moveTo(cx + Math.cos(a) * (r - 13), cy + Math.sin(a) * (r - 13));
+    ctx.lineTo(cx + Math.cos(a) * (r - (major ? 20 : 17)), cy + Math.sin(a) * (r - (major ? 20 : 17)));
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+    if (major)
+      ctx.fillText(String(v / 1000), cx + Math.cos(a) * (r - 32), cy + Math.sin(a) * (r - 32));
+  }
+  // gear
+  const gearTxt = gear === 0 ? "R" : gear === 11 ? "N" : String(gear);
+  ctx.fillStyle = frac > redFrac ? COL.bad : COL.accent;
+  ctx.font = `700 54px ${FONT}`;
+  glow(ctx, ctx.fillStyle, 18, () => ctx.fillText(gearTxt, cx, cy - 8));
+  ctx.fillStyle = COL.muted;
+  ctx.font = `600 13px ${FONT}`;
+  ctx.fillText(`${Math.round(rpm)} RPM`, cx, cy + 28);
+}
+
+function drawFriction(g, trail, latG, lonG) {
+  const { ctx, w, h } = g;
+  ctx.clearRect(0, 0, w, h);
+  const cx = w / 2, cy = h / 2;
+  const maxG = 1.6, scale = (Math.min(w, h) / 2 - 16) / maxG;
+
+  // soft field inside the outer ring
+  const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, 1.5 * scale);
+  grad.addColorStop(0, "rgba(0, 212, 255, 0.05)");
+  grad.addColorStop(1, "rgba(0, 212, 255, 0)");
+  ctx.fillStyle = grad;
+  ctx.beginPath(); ctx.arc(cx, cy, 1.5 * scale, 0, Math.PI * 2); ctx.fill();
+
+  ctx.strokeStyle = COL.grid;
+  ctx.fillStyle = COL.muted;
+  ctx.font = `600 10px ${FONT}`;
+  ctx.textAlign = "center";
+  ctx.lineWidth = 1;
+  for (const ring of [0.5, 1.0, 1.5]) {
+    ctx.beginPath(); ctx.arc(cx, cy, ring * scale, 0, Math.PI * 2); ctx.stroke();
+    ctx.fillText(ring.toFixed(1), cx + ring * scale - 1, cy - 4);
+  }
+  ctx.beginPath(); ctx.moveTo(cx - maxG * scale, cy); ctx.lineTo(cx + maxG * scale, cy); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx, cy - maxG * scale); ctx.lineTo(cx, cy + maxG * scale); ctx.stroke();
+  ctx.fillText("BRAKE", cx, cy + maxG * scale + 10);
+  ctx.fillText("ACCEL", cx, cy - maxG * scale - 4);
+
+  // trail: connected line, fading toward the oldest point
+  if (trail.length > 1) {
+    ctx.lineWidth = 2;
+    ctx.lineCap = "round";
+    for (let i = 1; i < trail.length; i++) {
+      const alpha = (i / trail.length) * 0.5;
+      ctx.strokeStyle = `rgba(0, 212, 255, ${alpha.toFixed(3)})`;
+      ctx.beginPath();
+      ctx.moveTo(cx + trail[i - 1][0] * scale, cy - trail[i - 1][1] * scale);
+      ctx.lineTo(cx + trail[i][0] * scale, cy - trail[i][1] * scale);
+      ctx.stroke();
+    }
+  }
+  // current
+  const gTot = Math.hypot(latG, lonG);
+  const dotCol = gTot > 1.1 ? COL.warn : COL.text;
+  glow(ctx, dotCol, 10, () => {
+    ctx.fillStyle = dotCol;
+    ctx.beginPath();
+    ctx.arc(cx + latG * scale, cy - lonG * scale, 5, 0, Math.PI * 2);
+    ctx.fill();
+  });
+}
+
+function drawGrip(g, slip, temps) {
+  const { ctx, w, h } = g;
+  ctx.clearRect(0, 0, w, h);
+  const carW = w * 0.32, carH = h * 0.62;
+  const cx = w / 2, cy = h / 2 - 6;
+
+  // car silhouette: body + cabin
+  ctx.strokeStyle = COL.dim;
+  ctx.lineWidth = 1.5;
+  roundRect(ctx, cx - carW / 2, cy - carH / 2, carW, carH, 16);
+  ctx.stroke();
+  ctx.strokeStyle = "#2a3546";
+  roundRect(ctx, cx - carW * 0.32, cy - carH * 0.18, carW * 0.64, carH * 0.42, 8);
+  ctx.stroke();
+
+  const tw = 27, th = 44;
+  const px = carW / 2 + 24, py = carH / 2 - 13;
+  const pos = [ // FL FR RL RR
+    [cx - px, cy - py], [cx + px, cy - py],
+    [cx - px, cy + py], [cx + px, cy + py],
+  ];
+  const labels = ["FL", "FR", "RL", "RR"];
+  ctx.textAlign = "center";
+  for (let i = 0; i < 4; i++) {
+    const [x, y] = pos[i];
+    const s = slip[i];
+    const col = slipColor(s);
+    const paint = () => {
+      ctx.fillStyle = col;
+      roundRect(ctx, x - tw / 2, y - th / 2, tw, th, 7);
+      ctx.fill();
+    };
+    if (s > 1.0) glow(ctx, col, 13, paint); else paint();
+    ctx.fillStyle = "#0b0e13";
+    ctx.font = `700 12px ${FONT}`;
+    ctx.textBaseline = "middle";
+    ctx.fillText(s.toFixed(1), x, y + 1);
+    ctx.fillStyle = COL.muted;
+    ctx.font = `600 10px ${FONT}`;
+    ctx.fillText(labels[i], x, y - th / 2 - 10);
+    const temp = Math.round(temps[i]);
+    ctx.fillStyle = temp < 160 ? "#7fb2ff" : temp > 230 ? "#ff8a5d" : COL.text;
+    ctx.font = `600 11px ${FONT}`;
+    ctx.fillText(`${temp}°`, x, y + th / 2 + 11);
+  }
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+/* buf: array of {th (0-100), br (0-100), st (-100..100)} */
+function drawStrip(g, buf, capacity) {
+  const { ctx, w, h } = g;
+  ctx.clearRect(0, 0, w, h);
+  ctx.strokeStyle = COL.grid;
+  ctx.lineWidth = 1;
+  for (const fy of [0.25, 0.5, 0.75]) {
+    ctx.beginPath(); ctx.moveTo(0, h * fy); ctx.lineTo(w, h * fy); ctx.stroke();
+  }
+  if (buf.length < 2) return;
+  const pad = 4;
+  const x = (i) => w - (buf.length - 1 - i) * (w / capacity);
+  const yFromPct = (p) => h - pad - (p / 100) * (h - 2 * pad);
+
+  // area fills under throttle and brake, then crisp lines on top
+  const area = (get, fill) => {
+    ctx.fillStyle = fill;
+    ctx.beginPath();
+    ctx.moveTo(x(0), h - pad);
+    for (let i = 0; i < buf.length; i++) ctx.lineTo(x(i), yFromPct(get(buf[i])));
+    ctx.lineTo(x(buf.length - 1), h - pad);
+    ctx.closePath();
+    ctx.fill();
+  };
+  const line = (get, color, width) => {
+    ctx.strokeStyle = color;
+    ctx.lineWidth = width;
+    ctx.beginPath();
+    for (let i = 0; i < buf.length; i++) {
+      const y = get(buf[i]);
+      i === 0 ? ctx.moveTo(x(i), y) : ctx.lineTo(x(i), y);
+    }
+    ctx.stroke();
+  };
+  area((s) => s.th, "rgba(47, 230, 168, 0.09)");
+  area((s) => s.br, "rgba(255, 93, 93, 0.09)");
+  line((s) => yFromPct(50 + s.st / 2), "#93a3b8", 1);           // steering, centered
+  line((s) => yFromPct(s.th), COL.good, 1.8);                   // throttle
+  line((s) => yFromPct(s.br), COL.bad, 1.8);                    // brake
+}

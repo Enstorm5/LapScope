@@ -1,0 +1,13 @@
+# recorded telemetry (bind-mounted into the container)
+data/
+
+# python
+__pycache__/
+*.pyc
+.venv/
+
+# editors / os
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store
