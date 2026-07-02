@@ -113,7 +113,7 @@ function render() {
   updateCarChip(f);
   drawRpm(rpmG, f.current_engine_rpm, f.engine_max_rpm, f.engine_idle_rpm, f.gear);
   drawFriction(fricG, state.trail, f.accel_x / 9.80665, f.accel_z / 9.80665);
-  drawGrip(gripG, f.tire_combined_slip, f.tire_temp);
+  drawGrip(gripG, f.tire_combined_slip, f.tire_temp, f.norm_susp_travel);
   drawStrip(stripG, state.strip, STRIP_CAP);
   updateShiftLights(f.engine_max_rpm > 0 ? f.current_engine_rpm / f.engine_max_rpm : 0);
 

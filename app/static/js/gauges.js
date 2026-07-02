@@ -143,7 +143,7 @@ function drawFriction(g, trail, latG, lonG) {
   });
 }
 
-function drawGrip(g, slip, temps) {
+function drawGrip(g, slip, temps, susp) {
   const { ctx, w, h } = g;
   ctx.clearRect(0, 0, w, h);
   const carW = w * 0.32, carH = h * 0.62;
@@ -187,6 +187,22 @@ function drawGrip(g, slip, temps) {
     ctx.fillStyle = temp < 160 ? "#7fb2ff" : temp > 230 ? "#ff8a5d" : COL.text;
     ctx.font = `600 11px ${FONT}`;
     ctx.fillText(`${temp}°`, x, y + th / 2 + 11);
+
+    // spring compression: outer-side bar, filled bottom-up (1 = bottomed out)
+    if (susp) {
+      const c = Math.max(0, Math.min(1, susp[i]));
+      const bw = 6, side = i % 2 === 0 ? -1 : 1;
+      const bx = x + side * (tw / 2 + 10) - bw / 2;
+      ctx.fillStyle = "#0a0e14";
+      ctx.strokeStyle = COL.grid;
+      ctx.lineWidth = 1;
+      roundRect(ctx, bx, y - th / 2, bw, th, 3);
+      ctx.fill(); ctx.stroke();
+      ctx.fillStyle = c > 0.95 ? COL.bad : c > 0.82 ? COL.warn : COL.accent;
+      const fh = Math.max(1.5, th * c);
+      roundRect(ctx, bx, y - th / 2 + (th - fh), bw, fh, 3);
+      ctx.fill();
+    }
   }
 }
 
