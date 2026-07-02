@@ -303,7 +303,10 @@ function drawMap() {
   const cosY = Math.cos(map3d.yaw), sinY = Math.sin(map3d.yaw);
   const raw = three
     ? (x, y, z, ground) => {
-        const xr = x * cosY - z * sinY, zr = x * sinY + z * cosY;
+        // rotate the 2D map plane (x, -z) so the 3D view keeps the same
+        // handedness as 2D - rotating (x, z) would mirror the track
+        const u = x, v = -z;
+        const xr = u * cosY - v * sinY, zr = u * sinY + v * cosY;
         return [xr, zr * 0.52 - (ground ? 0 : yDisp(y)) * 0.9];
       }
     : (x, y, z) => [x, -z];
