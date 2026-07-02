@@ -19,7 +19,7 @@ router = APIRouter()
 # FH6 CarClass indices; 6 = R (new class, 901-998 PI), 7 = X (999 only).
 # Verified on a real R-class car: PI 998 reports CarClass 6.
 CAR_CLASSES = ["D", "C", "B", "A", "S1", "S2", "R", "X"]
-CONDITIONS = {"dry", "wet", "snow", "dirt"}
+CONDITIONS = {"dry", "wet", "snow"}
 TRACK_TYPES = {"road", "street", "touge", "dirt", "cross", "drag", "wtc"}
 DRIVETRAINS = ["FWD", "RWD", "AWD"]
 
@@ -65,8 +65,8 @@ def _car_name(ordinal, override=None) -> str:
 def _session_out(row: dict) -> dict:
     row["car_class_letter"] = _class_letter(row.get("car_class"))
     row["car_name"] = _car_name(row.get("car_ordinal"), row.pop("car_name_override", None))
-    row["conditions"] = row.get("conditions") or "dry"
-    row["track_type"] = row.get("track_type") or "road"
+    # conditions / track_type stay None until tagged (or auto-detected):
+    # defaulting them to dry/road made every untagged session look tagged
     dt = row.get("drivetrain_type")
     row["drivetrain"] = DRIVETRAINS[dt] if isinstance(dt, int) and 0 <= dt < 3 else "?"
     started = time.strftime("%Y-%m-%d %H:%M", time.localtime(row["started_at"]))
@@ -109,14 +109,14 @@ def patch_session(session_id: int, body: SessionPatch, request: Request):
         raise HTTPException(404, "session not found")
     if body.name is not None and body.name.strip():
         store.rename_session(session_id, body.name.strip()[:80])
-    if body.conditions is not None:
-        if body.conditions not in CONDITIONS:
+    if body.conditions is not None:  # "" clears the tag back to not-set
+        if body.conditions and body.conditions not in CONDITIONS:
             raise HTTPException(400, f"conditions must be one of {sorted(CONDITIONS)}")
-        store.set_session_conditions(session_id, body.conditions)
+        store.set_session_conditions(session_id, body.conditions or None)
     if body.track_type is not None:
-        if body.track_type not in TRACK_TYPES:
+        if body.track_type and body.track_type not in TRACK_TYPES:
             raise HTTPException(400, f"track_type must be one of {sorted(TRACK_TYPES)}")
-        store.set_session_track_type(session_id, body.track_type)
+        store.set_session_track_type(session_id, body.track_type or None)
     return {"ok": True}
 
 

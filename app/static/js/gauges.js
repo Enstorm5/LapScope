@@ -216,6 +216,68 @@ function roundRect(ctx, x, y, w, h, r) {
   ctx.closePath();
 }
 
+/* Live track map: the path driven so far this session, plus the car.
+   pts: [[worldX, worldZ], ...] with null entries as teleport breaks;
+   ext: {minX, maxX, minZ, maxZ}; car: {x, z, vx, vz} or null. */
+function drawLiveMap(g, pts, ext, car) {
+  const { ctx, w, h } = g;
+  ctx.clearRect(0, 0, w, h);
+  if (pts.length < 2) {
+    ctx.fillStyle = COL.muted;
+    ctx.font = `600 13px ${FONT}`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("drive to draw the track — the map builds as you go", w / 2, h / 2);
+    return;
+  }
+  const pad = 18;
+  const spanX = Math.max(ext.maxX - ext.minX, 1e-6);
+  const spanZ = Math.max(ext.maxZ - ext.minZ, 1e-6);
+  const scale = Math.min((w - 2 * pad) / spanX, (h - 2 * pad) / spanZ);
+  // screen (x, -z): same handedness as the analysis page's 2D map
+  const X = (x) => (x - ext.minX) * scale + (w - spanX * scale) / 2;
+  const Y = (z) => (ext.maxZ - z) * scale + (h - spanZ * scale) / 2;
+
+  ctx.strokeStyle = "rgba(0, 212, 255, 0.55)";
+  ctx.lineWidth = 2;
+  ctx.lineJoin = "round";
+  ctx.beginPath();
+  let move = true;
+  for (const p of pts) {
+    if (p === null) { move = true; continue; }
+    move ? ctx.moveTo(X(p[0]), Y(p[1])) : ctx.lineTo(X(p[0]), Y(p[1]));
+    move = false;
+  }
+  ctx.stroke();
+
+  // where the recording began
+  ctx.fillStyle = COL.good;
+  ctx.beginPath();
+  ctx.arc(X(pts[0][0]), Y(pts[0][1]), 4, 0, Math.PI * 2);
+  ctx.fill();
+
+  if (car) {
+    const cx = X(car.x), cy = Y(car.z);
+    glow(ctx, COL.accent, 12, () => {
+      ctx.fillStyle = COL.text;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 5, 0, Math.PI * 2);
+      ctx.fill();
+    });
+    const vn = Math.hypot(car.vx, car.vz);
+    if (vn > 3) { // heading tick (screen y grows toward -z)
+      const hx = car.vx / vn, hz = car.vz / vn;
+      ctx.strokeStyle = COL.text;
+      ctx.lineWidth = 2;
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      ctx.moveTo(cx + hx * 7, cy - hz * 7);
+      ctx.lineTo(cx + hx * 14, cy - hz * 14);
+      ctx.stroke();
+    }
+  }
+}
+
 /* buf: array of {th (0-100), br (0-100), st (-100..100)} */
 function drawStrip(g, buf, capacity) {
   const { ctx, w, h } = g;

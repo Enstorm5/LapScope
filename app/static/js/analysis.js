@@ -87,9 +87,9 @@ async function selectSession(id) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
-  $("#cond-select").value = s.conditions;
+  $("#cond-select").value = s.conditions || "";
   $("#cond-select").onchange = async (e) => { await patch({ conditions: e.target.value }); loadSessions(); };
-  $("#track-select").value = s.track_type;
+  $("#track-select").value = s.track_type || "";
   $("#track-select").onchange = async (e) => { await patch({ track_type: e.target.value }); loadSessions(); };
   $("#btn-rename").onclick = () => renameSession(s);
   $("#btn-route").onclick = () => renameRoute(s);
@@ -252,6 +252,43 @@ function speedColor(v, lo, hi) {
 /* 3D view state: yaw is user-draggable; the tilt is a fixed axonometric angle */
 const map3d = { yaw: -0.9, dragging: false, dragX: 0, dragYaw: 0 };
 
+/* chart cursor -> map marker: drawMap caches its finished frame plus the
+   world->canvas projection, so hovering a chart only blits the cache and
+   paints a dot where lap A was at that track position */
+const mapCursor = { idx: null, proj: null, snap: null, dpr: 1 };
+
+function setMapCursor(idx) {
+  if (idx === mapCursor.idx) return;
+  mapCursor.idx = idx;
+  drawMapMarker();
+}
+
+function drawMapMarker() {
+  const canvas = $("#trackmap");
+  const A = state.dataA;
+  if (!canvas || !mapCursor.snap || !mapCursor.proj) return;
+  const ctx = canvas.getContext("2d");
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(mapCursor.snap, 0, 0);
+  ctx.setTransform(mapCursor.dpr, 0, 0, mapCursor.dpr, 0, 0);
+  if (mapCursor.idx == null || !A) return;
+  const c = A.channels;
+  const i = Math.min(mapCursor.idx, c.pos_x.length - 1);
+  const [x, y] = mapCursor.proj(c.pos_x[i], c.pos_y ? c.pos_y[i] : 0, c.pos_z[i], false);
+  ctx.save();
+  ctx.shadowColor = "#22d3ee";
+  ctx.shadowBlur = 10;
+  ctx.fillStyle = "#22d3ee";
+  ctx.strokeStyle = "#fff";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(x, y, 6, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+}
+
 function bindMapDrag(canvas) {
   canvas.addEventListener("pointerdown", (e) => {
     if (state.mapMode !== "3d") return;
@@ -281,6 +318,8 @@ function drawMap() {
   const ctx = canvas.getContext("2d");
   ctx.scale(dpr, dpr);
   ctx.clearRect(0, 0, cssW, cssH);
+
+  mapCursor.proj = null; // stale until this draw completes
 
   const A = state.dataA, B = state.dataB;
   const three = state.mapMode === "3d";
@@ -462,6 +501,15 @@ function drawMap() {
       <div><div class="label">Elevation range</div><div class="value">${yRange > 0.3 ? yRange.toFixed(0) + " m" : "flat"}</div></div>
     </div>`;
   }
+
+  // cache the finished frame + projection for the chart-cursor marker
+  mapCursor.proj = P;
+  mapCursor.dpr = dpr;
+  if (!mapCursor.snap) mapCursor.snap = document.createElement("canvas");
+  mapCursor.snap.width = canvas.width;
+  mapCursor.snap.height = canvas.height;
+  mapCursor.snap.getContext("2d").drawImage(canvas, 0, 0);
+  if (mapCursor.idx != null) drawMapMarker();
 }
 
 /* ---------------- comparison charts ---------------- */
@@ -485,6 +533,9 @@ function makeChart(el, title, xVals, seriesDefs, height = 150) {
   const opts = {
     title, width: el.clientWidth, height,
     cursor: { sync: { key: "fc" } },
+    // hovering any chart marks the matching spot on the track map (the
+    // charts all share lap A's x-array, so the cursor idx maps 1:1)
+    hooks: { setCursor: [(u) => setMapCursor(u.cursor.idx ?? null)] },
     scales: { x: { time: false } },
     // x is DistanceTraveled progress: on real FH6 circuits it is a per-route
     // track-position parameter, not literal meters - ideal for aligning laps,

@@ -241,13 +241,13 @@ class Store:
             conn.execute("UPDATE sessions SET name = ? WHERE id = ?", (name, session_id))
             conn.commit()
 
-    def set_session_conditions(self, session_id: int, conditions: str) -> None:
+    def set_session_conditions(self, session_id: int, conditions: str | None) -> None:
         with self.reader() as conn:
             conn.execute("UPDATE sessions SET conditions = ? WHERE id = ?",
                          (conditions, session_id))
             conn.commit()
 
-    def set_session_track_type(self, session_id: int, track_type: str) -> None:
+    def set_session_track_type(self, session_id: int, track_type: str | None) -> None:
         with self.reader() as conn:
             conn.execute("UPDATE sessions SET track_type = ? WHERE id = ?",
                          (track_type, session_id))

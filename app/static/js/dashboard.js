@@ -4,8 +4,10 @@ const rpmG = initCanvas("rpm", 290, 250);
 const fricG = initCanvas("friction", 250, 240);
 const gripG = initCanvas("grip", 230, 240);
 let stripG = initCanvas("strip", document.getElementById("strip").parentElement.clientWidth - 34, 170);
+let liveMapG = initCanvas("livemap", document.getElementById("livemap").parentElement.clientWidth - 34, 340);
 window.addEventListener("resize", () => {
   stripG = initCanvas("strip", document.getElementById("strip").parentElement.clientWidth - 34, 170);
+  liveMapG = initCanvas("livemap", document.getElementById("livemap").parentElement.clientWidth - 34, 340);
 });
 
 const STRIP_CAP = 12 * 60; // ~12 s at 60 Hz
@@ -19,6 +21,43 @@ const state = {
 
 const $ = (id) => document.getElementById(id);
 const shiftLights = document.querySelectorAll("#shift-lights i");
+
+/* live track map: path of the current session, thinned adaptively so long
+   drives stay cheap to redraw at display refresh rate */
+const LIVEMAP_CAP = 4000;
+const liveMap = {
+  pts: [],         // [x, z] world points; null = teleport break
+  last: null,      // last stored point (skips the nulls)
+  minDist: 3,      // m between stored points; doubles when thinned
+  session: null,
+  minX: Infinity, maxX: -Infinity, minZ: Infinity, maxZ: -Infinity,
+};
+
+function feedLiveMap(f) {
+  if (f.session_id == null || !f.is_race_on) return;
+  if (f.session_id !== liveMap.session) { // new session -> fresh track
+    liveMap.session = f.session_id;
+    liveMap.pts = [];
+    liveMap.last = null;
+    liveMap.minDist = 3;
+    liveMap.minX = liveMap.minZ = Infinity;
+    liveMap.maxX = liveMap.maxZ = -Infinity;
+  }
+  const x = f.pos_x, z = f.pos_z;
+  if (liveMap.last) {
+    const jump = Math.hypot(x - liveMap.last[0], z - liveMap.last[1]);
+    if (jump < liveMap.minDist) return;
+    if (jump > 250) liveMap.pts.push(null); // teleport / grid reset: break the line
+  }
+  liveMap.last = [x, z];
+  liveMap.pts.push(liveMap.last);
+  liveMap.minX = Math.min(liveMap.minX, x); liveMap.maxX = Math.max(liveMap.maxX, x);
+  liveMap.minZ = Math.min(liveMap.minZ, z); liveMap.maxZ = Math.max(liveMap.maxZ, z);
+  if (liveMap.pts.length > LIVEMAP_CAP) { // free roam can sprawl: thin + relax
+    liveMap.pts = liveMap.pts.filter((p, i) => p === null || i % 2 === 0);
+    liveMap.minDist *= 2;
+  }
+}
 
 function fmtLap(s) {
   if (!s || s <= 0) return "–:--.---";
@@ -38,6 +77,7 @@ function connect() {
       state.strip.push({ th: f.accel / 2.55, br: f.brake / 2.55, st: f.steer / 1.27 });
       if (state.strip.length > STRIP_CAP) state.strip.shift();
     }
+    feedLiveMap(f);
   };
   ws.onopen = () => setConn("live", "ok");
   ws.onclose = () => { setConn("reconnecting…", "err"); setTimeout(connect, 1500); };
@@ -115,6 +155,9 @@ function render() {
   drawFriction(fricG, state.trail, f.accel_x / 9.80665, f.accel_z / 9.80665);
   drawGrip(gripG, f.tire_combined_slip, f.tire_temp, f.norm_susp_travel);
   drawStrip(stripG, state.strip, STRIP_CAP);
+  drawLiveMap(liveMapG, liveMap.pts, liveMap,
+    f.is_race_on && f.session_id != null
+      ? { x: f.pos_x, z: f.pos_z, vx: f.vel_x, vz: f.vel_z } : null);
   updateShiftLights(f.engine_max_rpm > 0 ? f.current_engine_rpm / f.engine_max_rpm : 0);
 
   const v = f.speed * (state.mph ? 2.23694 : 3.6);

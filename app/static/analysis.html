@@ -34,6 +34,7 @@
       <h1 id="session-title"></h1>
       <span id="header-badges"></span>
       <select id="track-select" title="Track type">
+        <option value="">— race type —</option>
         <option value="road">🛣️ Road</option>
         <option value="street">🏙️ Street</option>
         <option value="touge">⛰️ Touge</option>
@@ -43,10 +44,10 @@
         <option value="wtc">⏱️ WTC</option>
       </select>
       <select id="cond-select" title="Track conditions">
+        <option value="">— conditions —</option>
         <option value="dry">☀️ Dry</option>
         <option value="wet">🌧️ Wet</option>
         <option value="snow">❄️ Snow</option>
-        <option value="dirt">🟤 Dirt</option>
       </select>
       <button id="btn-rename">Rename</button>
       <button id="btn-route">Name route</button>
@@ -80,6 +81,7 @@
             <span id="legend-scale"></span>
             <span><span class="swatch" style="background:#5b6675"></span> lap B</span>
             <span><span class="swatch" style="background:#34d399"></span> start</span>
+            <span>⌖ hover a chart to mark that spot</span>
             <span id="map-hint" style="display:none">↔ drag the map to rotate</span>
           </div>
         </div>

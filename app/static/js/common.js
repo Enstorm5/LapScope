@@ -26,11 +26,12 @@ const CONDITION_META = {
   dry: ["☀️", "Dry"],
   wet: ["🌧️", "Wet"],
   snow: ["❄️", "Snow"],
-  dirt: ["🟤", "Dirt"],
 };
 
+/* untagged sessions show no badge (instead of a misleading default) */
 function condBadge(cond) {
-  const [icon, label] = CONDITION_META[cond] || CONDITION_META.dry;
+  if (!CONDITION_META[cond]) return "";
+  const [icon, label] = CONDITION_META[cond];
   return `<span class="cond-badge cond-${cond}">${icon} ${label}</span>`;
 }
 
@@ -46,7 +47,8 @@ const TRACK_META = {
 };
 
 function trackBadge(type) {
-  const [icon, label] = TRACK_META[type] || TRACK_META.road;
+  if (!TRACK_META[type]) return "";
+  const [icon, label] = TRACK_META[type];
   return `<span class="cond-badge track-${type}">${icon} ${label}</span>`;
 }
 

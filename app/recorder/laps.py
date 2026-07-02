@@ -14,7 +14,7 @@ subdivide what would otherwise be one long stream:
 Event finishes are tricky: the game ends an event *without* incrementing
 LapNumber, so the final lap of a race - and the whole run of a
 point-to-point event (sprint, drag, street, touge, cross-country) - would
-otherwise be lost. Two finish signals fix that:
+otherwise be lost. Three finish signals fix that:
 
 - LastLap changing while LapNumber stays put = the line was crossed and the
   event ended -> the open lap is completed with that time.
@@ -24,6 +24,12 @@ otherwise be lost. Two finish signals fix that:
   point-to-point run: its one open lap is completed with the frozen race
   clock as the run time and the route is fingerprinted from start position
   + distance covered.
+- Telemetry stopping dead at the line: circuit races cut Data Out the
+  instant the race ends (verified on real captures - the last frame lands
+  within meters of the finish), so neither signal above ever arrives. At
+  session end, an open lap that covered a full lap's distance (compared to
+  the session's completed laps) is the final lap; it is completed with the
+  lap clock's last reading plus the remaining meters at the last speed.
 
 Point-to-point events may never start the CurrentLap clock, so the lap
 trace (and live delta) falls back to CurrentRaceTime elapsed since the lap
@@ -79,6 +85,8 @@ IMPACT_ACCEL = 45.0           # m/s^2 in the ground plane (~4.6 g) = contact
 RT_FREEZE_SECONDS = 1.5       # frozen race clock for this long = event finished
 FINISH_MIN_RT = 5.0           # ignore freezes before the clock really ran
 PTP_MIN_RUN_TIME = 10.0       # shortest believable point-to-point run
+FINAL_LAP_DIST_FRACTION = 0.97  # open lap covering this much of a typical lap
+                                # when the stream cuts = finished final lap
 
 # geometric lap detection for events with no lap fields (World Time Attack)
 WTA_ARM_DIST = 120.0          # m away from the launch anchor before a crossing can count
@@ -115,6 +123,8 @@ class SessionTracker:
         self._prev_race_time: float | None = None
         self._prev_cur_lap: float | None = None
         self._prev_dist: float | None = None
+        self._prev_speed = 0.0
+        self._lap_distances: list[float] = []  # completed-lap lengths this session
         self._lap_max_elapsed = 0.0
         self._lap_open_rt: float | None = None
         self._lap_open_last_lap: float | None = None
@@ -228,6 +238,8 @@ class SessionTracker:
         self._ref_d = self._ref_t = None
         self.best_lap_time = None
         self._prev_cur_lap = None
+        self._prev_speed = 0.0
+        self._lap_distances = []
         self._first_rt = frame["current_race_time"]
         self._event_finished = False
         self._finish_rt = None
@@ -251,18 +263,24 @@ class SessionTracker:
     def _end_session(self, end_t: float) -> None:
         self.flush()
         if self._lap_id is not None:
-            run_time = self._point_to_point_run_time()
-            self.store.complete_lap(self._lap_id, end_t, run_time, self._flags())
-            if run_time is not None:
-                self._completed_laps += 1
+            lap_time = self._point_to_point_run_time()
+            if lap_time is not None:
                 log.info("Session %d: point-to-point run captured (%.3fs)",
-                         self.session_id, run_time)
+                         self.session_id, lap_time)
                 if not self._route_assigned and self._prev_dist is not None:
                     length = self._prev_dist - self._lap_start_dist
                     if length > 100.0:
                         rid = self.store.match_or_create_route(
                             self._lap_start_pos[0], self._lap_start_pos[1], length)
                         self.store.set_session_route(self.session_id, rid)
+            else:
+                lap_time = self._final_lap_time_at_cutoff()
+                if lap_time is not None:
+                    log.info("Session %d: final lap recovered at telemetry"
+                             " cutoff (%.3fs)", self.session_id, lap_time)
+            self.store.complete_lap(self._lap_id, end_t, lap_time, self._flags())
+            if lap_time is not None:
+                self._completed_laps += 1
             self._lap_id = None
         if self._completed_laps == 0:
             # signal summary for diagnosing event types the segmentation
@@ -302,6 +320,8 @@ class SessionTracker:
         self._prev_race_time = None
         self._prev_cur_lap = None
         self._prev_dist = None
+        self._prev_speed = 0.0
+        self._lap_distances = []
         self._lap_max_elapsed = 0.0
         self._lap_open_rt = None
         self._lap_open_last_lap = None
@@ -330,6 +350,27 @@ class SessionTracker:
             if run > PTP_MIN_RUN_TIME:
                 return run
         return None
+
+    def _final_lap_time_at_cutoff(self) -> float | None:
+        """Lap time for an open lap in a session that ended mid-race: circuit
+        races cut Data Out the instant the race ends, so the final lap never
+        gets a finish signal - the stream just stops at the line. If the open
+        lap covered a (nearly) full lap's distance, it *is* the final lap.
+        An abandoned mid-lap quit doesn't qualify - too little distance."""
+        if (not self._lap_distances or self._prev_dist is None
+                or self._lap_max_elapsed <= 1.0):
+            return None
+        # upper median: a partial first lap (server joined mid-lap) must not
+        # drag the typical length down
+        typical = sorted(self._lap_distances)[len(self._lap_distances) // 2]
+        covered = self._prev_dist - self._lap_start_dist
+        if typical <= 0 or covered < FINAL_LAP_DIST_FRACTION * typical:
+            return None
+        lap_time = self._lap_max_elapsed
+        if covered < typical and self._prev_speed > 1.0:
+            # the last frame landed a few meters short of the line
+            lap_time += min((typical - covered) / self._prev_speed, 2.0)
+        return lap_time
 
     def _lap_logic(self, t: float, frame: dict) -> float | None:
         ln = frame["lap_number"]
@@ -396,6 +437,7 @@ class SessionTracker:
                 self._cur_d.pop()
                 self._cur_t.pop()
         self._prev_dist = dist
+        self._prev_speed = frame["speed"]
         self._lap_max_elapsed = max(self._lap_max_elapsed, elapsed)
 
         if self._lap_number is None or ln < self._lap_number:
@@ -522,6 +564,8 @@ class SessionTracker:
         full_trace = bool(self._cur_t) and self._cur_t[0] < 5.0
         if lap_time is not None:
             self._completed_laps += 1
+            if self._cur_d:  # lap length, for spotting the cut-off final lap
+                self._lap_distances.append(self._cur_d[-1])
             if full_trace and not self._route_assigned:
                 self._assign_route()
             if full_trace and (self.best_lap_time is None
