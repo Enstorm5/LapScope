@@ -15,7 +15,9 @@ from ..telemetry.packet import parse
 log = logging.getLogger("forzacalibrator.api")
 router = APIRouter()
 
-CAR_CLASSES = ["D", "C", "B", "A", "S1", "S2", "X", "X"]
+# FH6 CarClass indices; 6 = R (new class, 901-998 PI), 7 = X (999 only).
+# Verified on a real R-class car: PI 998 reports CarClass 6.
+CAR_CLASSES = ["D", "C", "B", "A", "S1", "S2", "R", "X"]
 CONDITIONS = {"dry", "wet", "snow", "dirt"}
 TRACK_TYPES = {"road", "street", "touge", "dirt", "cross", "drag", "wtc"}
 DRIVETRAINS = ["FWD", "RWD", "AWD"]

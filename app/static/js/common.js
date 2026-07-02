@@ -1,6 +1,7 @@
 /* Shared UI helpers: Forza-colored class badges and track-condition ribbons. */
 
-const CLASS_LETTERS = ["D", "C", "B", "A", "S1", "S2", "X", "X"];
+/* FH6 CarClass indices; 6 = R (new class, 901-998 PI), 7 = X (999 only) */
+const CLASS_LETTERS = ["D", "C", "B", "A", "S1", "S2", "R", "X"];
 
 /* Forza Horizon PI badge colors */
 const CLASS_COLORS = {
@@ -10,6 +11,7 @@ const CLASS_COLORS = {
   A: "#e63946",   // red
   S1: "#b750e0",  // purple
   S2: "#2f6df6",  // blue
+  R: "#ff3d7f",   // magenta - new FH6 class, 901-998 PI
   X: "#37e05c",   // green
 };
 

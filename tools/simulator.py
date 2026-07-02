@@ -91,7 +91,7 @@ class Sim:
         self.wet = args.wet
         self.f = empty_fields()
         self.f.update(is_race_on=1, engine_max_rpm=MAX_RPM, engine_idle_rpm=IDLE_RPM,
-                      car_ordinal=CAR_ORDINAL, car_class=5, car_pi=987,
+                      car_ordinal=CAR_ORDINAL, car_class=6, car_pi=987,  # FH6: 6 = R
                       drivetrain_type=2, num_cylinders=6, car_group=21,
                       race_position=1, fuel=1.0, pos_y=105.0)
         self.s = 0.0

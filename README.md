@@ -16,7 +16,8 @@ receives the game's official "Data Out" UDP stream, and serves a web UI with:
   never does that) and 💥 **contact** (a ground-plane G-spike beyond anything tires can
   generate). Rewound stretches are also cut from charts and the map, so only the
   finally-driven line is shown.
-- **Session metadata** — Forza-colored class/PI ribbons, drivetrain badges
+- **Session metadata** — Forza-colored class/PI ribbons (FH6 classes, including
+  the new **R class**: 901–998 PI, with X reserved for 999), drivetrain badges
   (FWD/RWD/AWD, straight from the packet), car names (bundled community FH6 ordinal
   list + your own overrides), track conditions (wet is auto-detected from puddle
   telemetry; snow/dirt are one-click manual tags), and a track-type tag
