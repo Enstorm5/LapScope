@@ -148,6 +148,7 @@ class SessionTracker:
         self._prev_cur_lap: float | None = None
         self._prev_dist: float | None = None
         self._prev_frame_rt: float | None = None  # last frame's race clock (pre-reset)
+        self._prev_frame_t: float | None = None   # last frame's wall clock (pre-reset)
         self._prev_pos: tuple[float, float] | None = None  # last frame's world pos
         self._prev_speed = 0.0
         self._lap_distances: list[float] = []  # completed-lap lengths this session
@@ -286,6 +287,7 @@ class SessionTracker:
         self.best_lap_time = None
         self._prev_cur_lap = None
         self._prev_frame_rt = None
+        self._prev_frame_t = None
         self._prev_pos = None
         self._prev_speed = 0.0
         self._lap_distances = []
@@ -385,6 +387,7 @@ class SessionTracker:
         self._prev_cur_lap = None
         self._prev_dist = None
         self._prev_frame_rt = None
+        self._prev_frame_t = None
         self._prev_pos = None
         self._prev_speed = 0.0
         self._lap_distances = []
@@ -422,10 +425,11 @@ class SessionTracker:
         return None
 
     def _finish_ptp_run(self, t: float, run_time: float) -> None:
-        """Complete the single run of a point-to-point event at its finish
-        (the DistanceTraveled reset), fingerprinting the route from the run's
-        start position and covered distance. _prev_dist still holds the
-        pre-reset odometer here, so it measures the whole course."""
+        """Complete the single run of a point-to-point event at its finish,
+        fingerprinting the route from the run's start position and covered
+        distance. `t` is the last racing frame (the run ends there, before
+        the odometer-reset frame); _prev_dist still holds the pre-reset
+        odometer here, so it measures the whole course."""
         self.store.complete_lap(self._lap_id, t, run_time, self._flags())
         self._completed_laps += 1
         if not self._route_assigned and self._prev_dist is not None:
@@ -543,7 +547,12 @@ class SessionTracker:
                     self._lap_id = None
             elif finished_now and self._lap_id is not None:
                 # single run (dirt sprint / sprint): complete it here, timed
-                # launch-to-line, before post-finish parked frames pollute it
+                # launch-to-line, before post-finish parked frames pollute it.
+                # End the lap at the PREVIOUS (last racing) frame, not this
+                # one: this frame has DistanceTraveled reset to 0 but is still
+                # at the finish position, so keeping it in the lap makes the
+                # analysis map (which orders points by DistanceTraveled) draw
+                # a spurious streak from the grid across to the finish.
                 launch = (self._launch_rt if self._launch_rt is not None
                           else (self._lap_open_rt or 0.0))
                 run = (self._finish_rt - launch
@@ -551,9 +560,10 @@ class SessionTracker:
                 if run is not None and run > PTP_MIN_RUN_TIME:
                     log.info("Session %d: point-to-point run captured (%.3fs,"
                              " launch to finish)", self.session_id, run)
-                    self._finish_ptp_run(t, run)
+                    self._finish_ptp_run(self._prev_frame_t or t, run)
             self._prev_dist = dist
             self._prev_frame_rt = rt
+            self._prev_frame_t = t
             self._prev_pos = (frame["pos_x"], frame["pos_z"])
             self._prev_cur_lap = cur
             return None
@@ -590,6 +600,7 @@ class SessionTracker:
                 self._cur_t.pop()
         self._prev_dist = dist
         self._prev_frame_rt = rt
+        self._prev_frame_t = t
         self._prev_pos = (frame["pos_x"], frame["pos_z"])
         self._prev_speed = frame["speed"]
         self._lap_max_elapsed = max(self._lap_max_elapsed, elapsed)
