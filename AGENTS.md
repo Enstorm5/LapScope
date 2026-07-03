@@ -18,6 +18,8 @@ FH6 ──UDP 9999──▶ listener.py ─▶ packet.py parse ─┬─▶ hub.
 
 ## Dev workflow (important, non-obvious)
 
+- **After each iteration of changes, create a local git commit.** **Never push
+  to a remote** — the owner handles pushing themselves.
 - **Static files are baked into the image.** Any change under `app/` requires
   `docker compose build` + restart. There is no bind mount for code.
 - The Claude Code preview config (`.claude/launch.json`) runs `docker compose up`
@@ -44,13 +46,22 @@ FH6 ──UDP 9999──▶ listener.py ─▶ packet.py parse ─┬─▶ hub.
   round-trip self-test and against the real game).
 - **Not in the packet** (features must work around these): route/track names,
   car name strings, weather, game mode (Rivals/race/free-roam), lap-invalidated
-  flag, rival/opponent data.
+  flag, rival/opponent data. Game mode is *inferred* instead — see
+  `SessionTracker.race_mode` below.
+- **`IsRaceOn` is 1 in free roam too** — it only separates driving from menus.
+  Events vs cruising: races grid you with `RacePosition > 0` from the very first
+  countdown frame; WTA / point-to-point events reset `DistanceTraveled` to 0 at
+  launch; free roam has neither (verified on real captures, 2026-07-02).
+- **`Velocity*` is car-local** like `Acceleration*`: ~`(0, 0, speed)` whatever
+  the world direction — useless for heading. `Yaw` IS world-space: the car moves
+  along `(sin yaw, cos yaw)` in world X/Z (verified against position deltas).
 - **`DistanceTraveled` is NOT meters** on real circuits: it advances by the same
   fixed amount every lap of a given route (~2.4–2.5× the true driven length) —
   a track-position parameter. Perfect for aligning laps and fingerprinting
   routes; never display it as a length (integrate `Speed` for that). The
   simulator emits true meters, so this quirk only shows on real-game data.
-- `DrivetrainType`: 0=FWD 1=RWD 2=AWD. `CarClass`: index into D,C,B,A,S1,S2,X.
+- `DrivetrainType`: 0=FWD 1=RWD 2=AWD. `CarClass`: index into D,C,B,A,S1,S2,R,X
+  (R is new in FH6: 901–998 PI; X is 999 only — verified on a real 998 car).
 - Wheel arrays are ordered FL, FR, RL, RR. `TireTemp` is Fahrenheit.
 - The game binds its own socket on ports **5200–5300** — never use them.
 - Xbox-app (UWP) builds may block loopback; fallbacks documented in README.
@@ -63,11 +74,15 @@ All the rules exist because some real behavior broke a naive version:
 - Session = `IsRaceOn` stretch, ends after 15 s of race-off or silence.
 - `CurrentRaceTime` warping back to ~0 splits sessions (event restarts,
   free-roam time-attacks).
-- **Finishes don't increment `LapNumber`.** Final race laps are caught by
-  `LastLap` changing while `LapNumber` is static; point-to-point events
-  (sprint/drag/street/touge) are caught by the race clock freezing ≥1.5 s while
-  `IsRaceOn` stays 1 (finish cinematic), then kept as one run timed by the
-  frozen clock. Abandoned events (no finish signal) are discarded.
+- **Finishes don't increment `LapNumber`.** Three signals: `LastLap` changing
+  while `LapNumber` is static; the race clock freezing ≥1.5 s while `IsRaceOn`
+  stays 1 (point-to-point finish cinematic → one run timed by the frozen clock);
+  and — the usual case for real circuit races — **the stream cutting dead at the
+  finish line** (verified: the last packet lands within meters of the line). An
+  open lap that covered ≥97% of the session's typical lap length at session end
+  is completed from the lap clock's last reading plus the remaining meters at
+  the last speed. Abandoned events (no finish signal, partial distance) are
+  discarded.
 - Point-to-point events may never start `CurrentLap`; lap traces and the live
   delta fall back to race-time-elapsed-since-lap-open.
 - **World Time Attack broadcasts no lap fields at all** (real capture, 2026-07-02:
@@ -78,9 +93,19 @@ All the rules exist because some real behavior broke a naive version:
   to the anchor after being ≥120 m away, traveling within ~75° of the launch
   heading, having covered ≥500 dist-units. The run finish is `DistanceTraveled`
   hard-resetting (~18000 → 0) while the clock keeps counting; the post-finish
-  coast "lap" is deleted. Caveat: a free-roam session that starts at
-  `DistanceTraveled` 0 (fresh boot) and loops back over its start point can
-  produce a geometric lap — accepted trade-off.
+  coast "lap" is deleted. A single-frame position jump >250 m (fast travel)
+  disarms the geometric detection — you never teleport mid-run, so it's a
+  free-roam giveaway. Remaining caveat: a fresh-boot free-roam session starting
+  at `DistanceTraveled` 0 that loops back over its start point *without*
+  teleporting can still produce a geometric lap — accepted trade-off.
+- `SessionTracker.race_mode` (in the per-frame extras merged into every
+  WebSocket frame, alongside `session_id`/`delta`/`lap_elapsed`): True while a
+  timed event is running — `RacePosition > 0`, live lap fields, or the geometric
+  launch anchor armed; False in free roam and once the event finishes. The
+  dashboard gates the lap timer, the RACE MODE / FREE ROAM chip, and the live
+  track map on it. Verified transitions on real captures: race = on from the
+  first grid frame; WTA = off during event-load/grid-hold, on at launch, off at
+  the finish-line distance collapse.
 - `POST /api/sessions/{id}/reprocess` (UI: Reprocess button) replays stored
   frames through a fresh `SessionTracker` via `_ReplayStore` (laps/routes real,
   session row untouched, discard suppressed) — recovers laps recorded before a
@@ -131,3 +156,4 @@ server joining mid-lap, event restart.
 | Point-to-point | `--sprint 75` | session kept, single run ≈75 s, route assigned |
 | World Time Attack | `--wta 3` | launch + 3 geometric laps + distance-reset finish, no post-finish phantom lap |
 | Jumps in 3D | `--sprint 75 --jumps` (or any + `--jumps`) | 3D map scale sane, spikes capped |
+| Race-mode gating | `--freeroam 35 --race 3` | chip FREE ROAM then RACE MODE; timer dashed in free roam; live map draws the race only |

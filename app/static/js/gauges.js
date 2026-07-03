@@ -216,9 +216,10 @@ function roundRect(ctx, x, y, w, h, r) {
   ctx.closePath();
 }
 
-/* Live track map: the path driven so far this session, plus the car.
+/* Live track map: the path driven so far this event, plus the car.
    pts: [[worldX, worldZ], ...] with null entries as teleport breaks;
-   ext: {minX, maxX, minZ, maxZ}; car: {x, z, vx, vz} or null. */
+   ext: {minX, maxX, minZ, maxZ}; car: {x, z, hx, hz} or null (hx/hz =
+   world heading unit vector, from yaw). */
 function drawLiveMap(g, pts, ext, car) {
   const { ctx, w, h } = g;
   ctx.clearRect(0, 0, w, h);
@@ -227,7 +228,7 @@ function drawLiveMap(g, pts, ext, car) {
     ctx.font = `600 13px ${FONT}`;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText("drive to draw the track — the map builds as you go", w / 2, h / 2);
+    ctx.fillText("waiting for a race — the track draws here once an event starts", w / 2, h / 2);
     return;
   }
   const pad = 18;
@@ -264,17 +265,14 @@ function drawLiveMap(g, pts, ext, car) {
       ctx.arc(cx, cy, 5, 0, Math.PI * 2);
       ctx.fill();
     });
-    const vn = Math.hypot(car.vx, car.vz);
-    if (vn > 3) { // heading tick (screen y grows toward -z)
-      const hx = car.vx / vn, hz = car.vz / vn;
-      ctx.strokeStyle = COL.text;
-      ctx.lineWidth = 2;
-      ctx.lineCap = "round";
-      ctx.beginPath();
-      ctx.moveTo(cx + hx * 7, cy - hz * 7);
-      ctx.lineTo(cx + hx * 14, cy - hz * 14);
-      ctx.stroke();
-    }
+    // heading tick from yaw (screen y grows toward -z)
+    ctx.strokeStyle = COL.text;
+    ctx.lineWidth = 2;
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(cx + car.hx * 7, cy - car.hz * 7);
+    ctx.lineTo(cx + car.hx * 14, cy - car.hz * 14);
+    ctx.stroke();
   }
 }
 

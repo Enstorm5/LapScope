@@ -34,7 +34,11 @@ const liveMap = {
 };
 
 function feedLiveMap(f) {
-  if (f.session_id == null || !f.is_race_on) return;
+  // only draw during an actual event (race / time attack / point-to-point):
+  // IsRaceOn is 1 in free roam too, so fast-travel sprawl would wreck the
+  // map - race_mode comes from the recorder, which knows the difference.
+  // The finished track stays on screen until the next event starts.
+  if (f.session_id == null || !f.race_mode) return;
   if (f.session_id !== liveMap.session) { // new session -> fresh track
     liveMap.session = f.session_id;
     liveMap.pts = [];
@@ -155,9 +159,11 @@ function render() {
   drawFriction(fricG, state.trail, f.accel_x / 9.80665, f.accel_z / 9.80665);
   drawGrip(gripG, f.tire_combined_slip, f.tire_temp, f.norm_susp_travel);
   drawStrip(stripG, state.strip, STRIP_CAP);
+  // heading from yaw: the packet's Velocity is car-local (always "forward"),
+  // yaw is world-space - the car moves along (sin yaw, cos yaw)
   drawLiveMap(liveMapG, liveMap.pts, liveMap,
-    f.is_race_on && f.session_id != null
-      ? { x: f.pos_x, z: f.pos_z, vx: f.vel_x, vz: f.vel_z } : null);
+    f.race_mode && f.session_id != null
+      ? { x: f.pos_x, z: f.pos_z, hx: Math.sin(f.yaw), hz: Math.cos(f.yaw) } : null);
   updateShiftLights(f.engine_max_rpm > 0 ? f.current_engine_rpm / f.engine_max_rpm : 0);
 
   const v = f.speed * (state.mph ? 2.23694 : 3.6);
@@ -184,10 +190,16 @@ function render() {
   $("steer-ind").style.left = `calc(${(50 + st * 0.44).toFixed(1)}% - 9px)`;
   $("gear-mini").textContent = f.gear === 0 ? "R" : f.gear === 11 ? "N" : f.gear;
 
-  $("lap-cur").textContent = fmtLap(f.current_lap || f.lap_elapsed);
+  // lap timing only means something during an event; in free roam the
+  // fallback lap clock would just count up meaninglessly
+  const race = !!f.race_mode;
+  const flag = $("race-flag");
+  flag.textContent = race ? "RACE MODE" : "FREE ROAM";
+  flag.classList.toggle("on", race);
+  $("lap-cur").textContent = race ? fmtLap(f.current_lap || f.lap_elapsed) : "–:--.---";
   $("lap-last").textContent = fmtLap(f.last_lap);
   $("lap-best").textContent = fmtLap(f.session_best ?? f.best_lap);
-  $("lap-no").textContent = `${f.lap_number + 1} / ${f.race_position || "–"}`;
+  $("lap-no").textContent = race ? `${f.lap_number + 1} / ${f.race_position || "–"}` : "– / –";
 
   const d = $("delta");
   if (f.delta == null) {

@@ -174,8 +174,11 @@ class Sim:
             timestamp_ms=int((time.monotonic() - self.t0) * 1000) & 0xFFFFFFFF,
             current_engine_rpm=rpm,
             accel_x=lat_a, accel_y=0.2, accel_z=self.lon_a,
-            vel_x=self.v * math.cos(heading), vel_z=self.v * math.sin(heading),
-            ang_vel_y=self.v * curv, yaw=heading,
+            # like the real game: Velocity is car-local (~(0, 0, speed)),
+            # and the car moves along (sin yaw, cos yaw) in world X/Z -
+            # here movement is (cos heading, sin heading), so yaw = pi/2 - heading
+            vel_x=0.0, vel_z=self.v,
+            ang_vel_y=self.v * curv, yaw=math.pi / 2 - heading,
             norm_susp_travel=[min(1.0, 0.45 + 0.3 * abs(lat_a) / GRIP_LAT + 0.1 * random.random())] * 4,
             tire_slip_ratio=[slip * 0.6] * 4,
             wheel_rotation_speed=[self.v / 0.33] * 4,
@@ -200,8 +203,12 @@ class Sim:
             time.sleep(lag)
 
     def freeroam(self, seconds: float) -> None:
-        """Cruise: lap fields all zero, free-roam clock counting."""
+        """Cruise: lap fields all zero, free-roam clock counting, no grid
+        position, and the odometer already ran (only events reset it to 0)."""
         print(f"free roam for {seconds:.0f}s (no lap timing)")
+        self.f["race_position"] = 0
+        if self.total_dist == 0.0:
+            self.total_dist = 3210.0
         self.pace = 0.7
         t = 0.0
         while t < seconds:
@@ -223,6 +230,8 @@ class Sim:
         """
         print(f"{label}: ~{seconds:.0f}s of timed laps (lap ~{PERIMETER:.0f} m)")
         self.s = 0.0  # events grid you at the start line
+        self.total_dist = 0.0        # events reset the odometer (real captures)
+        self.f["race_position"] = random.randint(1, 8)  # gridded from frame one
         self.pace = random.uniform(0.97, 1.0)
         t, lap_start, lap_no = 0.0, 0.0, 0
         best = last = 0.0
@@ -279,6 +288,8 @@ class Sim:
         finish line."""
         print(f"sprint: ~{seconds:.0f}s point-to-point (no lap counter)")
         self.s = 0.0
+        self.total_dist = 0.0
+        self.f["race_position"] = random.randint(1, 8)
         self.open_course = True
         self._oc_x, self._oc_z, self._oc_s = -STRAIGHT / 2, -RADIUS, 0.0
         self.pace = random.uniform(0.97, 1.0)
@@ -298,6 +309,7 @@ class Sim:
         DistanceTraveled while the clock keeps counting."""
         print(f"wta ({laps} laps): no lap fields at all - geometric detection")
         dead = dict(lap_no=0, cur_lap=0.0, last=0.0, best=0.0)
+        self.f["race_position"] = 0  # verified on the real capture
         t = 0.0
         # event load: parked far from the track, clock already counting
         for _ in range(int(6.0 / self.dt)):

@@ -5,7 +5,11 @@ receives the game's official "Data Out" UDP stream, and serves a web UI with:
 
 - **Live dashboard** — speed/RPM/gear gauges, friction circle (G-forces), per-tire grip
   panel (combined slip: green = grip, red = sliding), understeer/oversteer indicator,
-  throttle/brake/steering traces, lap timer with **live delta vs. your session-best lap**.
+  throttle/brake/steering traces, lap timer with **live delta vs. your session-best lap**,
+  and a **live track map** that draws the circuit as you drive. The map and lap timer
+  only run in **race mode** (a RACE MODE / FREE ROAM chip shows which): IsRaceOn is 1
+  even in free roam, so the recorder detects events itself — a grid position, live lap
+  fields, or the odometer reset that marks a World Time Attack / point-to-point launch.
 - **Recording & analysis** — timed drives are stored in SQLite. Browse sessions, see lap
   times, draw your **racing line on a track map** colored by speed or tire slip, and
   compare two laps (A vs. B) with distance-aligned charts: time delta, speed, inputs,

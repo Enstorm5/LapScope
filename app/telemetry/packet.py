@@ -21,9 +21,11 @@ _STRUCT = struct.Struct(
     "I"    # TimestampMS
     "3f"   # EngineMaxRpm, EngineIdleRpm, CurrentEngineRpm
     "3f"   # AccelerationX/Y/Z (car-local, m/s^2; X=right, Y=up, Z=forward)
-    "3f"   # VelocityX/Y/Z
+    "3f"   # VelocityX/Y/Z (car-local too: ~(0, 0, speed) whatever the world
+           #   direction - verified on a real capture against position deltas)
     "3f"   # AngularVelocityX/Y/Z
-    "3f"   # Yaw, Pitch, Roll
+    "3f"   # Yaw, Pitch, Roll (world; the car moves along (sin yaw, cos yaw)
+           #   in the world X/Z plane - verified against position deltas)
     "4f"   # NormalizedSuspensionTravel (0=full stretch, 1=full compression)
     "4f"   # TireSlipRatio (>1 = wheelspin/lockup)
     "4f"   # WheelRotationSpeed (rad/s)

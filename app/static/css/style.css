@@ -572,6 +572,23 @@ main.grid .lap-grid { margin-bottom: auto; }
 
 .lap-flag { margin-right: 4px; cursor: help; }
 
+/* live page: race-mode chip in the lap panel header */
+.race-flag {
+  margin-left: auto;
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--panel-edge);
+  background: #0d1218;
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  color: var(--muted);
+}
+.race-flag.on {
+  color: var(--good);
+  border-color: #1d5c46;
+  text-shadow: 0 0 8px rgba(47, 230, 168, 0.55);
+}
+
 /* ---------- analysis page ---------- */
 
 .analysis-layout {

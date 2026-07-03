@@ -94,6 +94,8 @@ WTA_CROSS_DIST = 60.0         # m from the anchor that counts as "at the line"
 WTA_MIN_LAP_DIST = 500.0      # DistanceTraveled units a lap must cover before crossing
 WTA_HEADING_COS = 0.25        # crossing direction within ~75 deg of the launch heading
 WTA_DIST_COLLAPSE = 1000.0    # DistanceTraveled dropping this much = run finished
+WTA_TELEPORT_JUMP = 250.0     # single-frame position jump = fast travel (free roam,
+                              # not an event - you never teleport mid-run)
 
 # keep sessions that would otherwise be discarded (no completed laps) - for
 # capturing event types the segmentation doesn't recognize yet
@@ -140,6 +142,7 @@ class SessionTracker:
         self._wta_armed = False
         self._wta_inside = False
         self._wta_best: tuple | None = None  # (d, t, rt, dist, x, z) closest pass
+        self._wta_prev_pos: tuple[float, float] | None = None
         self._puddle_frames = 0
         self._route_assigned = False
         self._session_start_t = 0.0
@@ -158,7 +161,7 @@ class SessionTracker:
                 elif t - self._race_off_since >= RACE_OFF_GRACE:
                     self._end_session(self._race_off_since)
             return {"session_id": self.session_id, "delta": None,
-                    "session_best": self.best_lap_time}
+                    "session_best": self.best_lap_time, "race_mode": False}
 
         self._race_off_since = None
 
@@ -210,7 +213,21 @@ class SessionTracker:
             if e > 0:
                 lap_elapsed = e
         return {"session_id": self.session_id, "delta": delta,
-                "session_best": self.best_lap_time, "lap_elapsed": lap_elapsed}
+                "session_best": self.best_lap_time, "lap_elapsed": lap_elapsed,
+                "race_mode": self.race_mode(frame)}
+
+    def race_mode(self, frame: dict) -> bool:
+        """Is a timed event running right now, as opposed to free-roam
+        cruising? IsRaceOn can't tell (it is 1 in free roam too). Verified on
+        real captures: races grid you with RacePosition > 0 from the very
+        first frame; lap-timed events run the lap fields; WTA / point-to-point
+        events broadcast neither but reset DistanceTraveled at launch, which
+        is exactly when the geometric anchor arms. Ends with the event."""
+        if self.session_id is None or self._event_finished:
+            return False
+        return (frame["race_position"] > 0
+                or not self._lap_fields_dead
+                or self._wta_anchor is not None)
 
     def tick(self, now: float) -> None:
         """Watchdog: close the session if the game simply stopped sending."""
@@ -251,6 +268,7 @@ class SessionTracker:
         self._wta_armed = False
         self._wta_inside = False
         self._wta_best = None
+        self._wta_prev_pos = None
         self._puddle_frames = 0
         self._route_assigned = False
         self._session_start_t = t
@@ -335,6 +353,7 @@ class SessionTracker:
         self._wta_armed = False
         self._wta_inside = False
         self._wta_best = None
+        self._wta_prev_pos = None
         self._lap_flags = set()
 
     def _point_to_point_run_time(self) -> float | None:
@@ -494,6 +513,20 @@ class SessionTracker:
     def _wta_logic(self, t: float, frame: dict, rt: float, dist: float) -> None:
         """Geometric lap detection for events that broadcast no lap fields at
         all (World Time Attack): a lap is a return to the launch point."""
+        # a single-frame position jump is a fast travel: this is free roam,
+        # not an event - disarm (rewind scrubs move gradually, never this far)
+        if self._wta_prev_pos is not None and self._wta_anchor is not None:
+            jump = math.hypot(frame["pos_x"] - self._wta_prev_pos[0],
+                              frame["pos_z"] - self._wta_prev_pos[1])
+            if jump > WTA_TELEPORT_JUMP:
+                log.info("Session %d: teleport (%.0f m) - disarming geometric"
+                         " lap detection (free roam)", self.session_id, jump)
+                self._wta_anchor = None
+                self._wta_heading = None
+                self._wta_armed = False
+                self._wta_inside = False
+                self._wta_best = None
+        self._wta_prev_pos = (frame["pos_x"], frame["pos_z"])
         if self._wta_anchor is None:
             if dist < 1.0:
                 # grid hold / event load: distance pinned at zero until GO
@@ -515,9 +548,11 @@ class SessionTracker:
             return
         if self._wta_heading is None:
             if frame["speed"] > 10.0:
-                n = math.hypot(frame["vel_x"], frame["vel_z"])
-                if n > 1e-6:
-                    self._wta_heading = (frame["vel_x"] / n, frame["vel_z"] / n)
+                # Velocity is car-local (~(0, speed) whatever the direction),
+                # so the world heading comes from yaw: the car moves along
+                # (sin yaw, cos yaw) - verified against position deltas
+                self._wta_heading = (math.sin(frame["yaw"]),
+                                     math.cos(frame["yaw"]))
             return
         d = math.hypot(frame["pos_x"] - self._wta_anchor[0],
                        frame["pos_z"] - self._wta_anchor[1])
@@ -525,10 +560,9 @@ class SessionTracker:
             self._wta_armed = d > WTA_ARM_DIST
             return
         if d < WTA_CROSS_DIST:
-            vn = math.hypot(frame["vel_x"], frame["vel_z"])
-            aligned = vn > 3.0 and (
-                (frame["vel_x"] * self._wta_heading[0]
-                 + frame["vel_z"] * self._wta_heading[1]) / vn > WTA_HEADING_COS)
+            aligned = frame["speed"] > 3.0 and (
+                math.sin(frame["yaw"]) * self._wta_heading[0]
+                + math.cos(frame["yaw"]) * self._wta_heading[1]) > WTA_HEADING_COS
             if (aligned and dist - self._lap_start_dist > WTA_MIN_LAP_DIST
                     and (self._wta_best is None or d < self._wta_best[0])):
                 self._wta_best = (d, t, rt, dist, frame["pos_x"], frame["pos_z"])
