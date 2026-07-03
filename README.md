@@ -185,3 +185,10 @@ driven meters — it advances by the same fixed amount every lap of a given rout
 ideal for aligning two laps by track position (how the comparison charts use it),
 but not a length. The "Driven" figure on the analysis page is integrated from
 speed instead.
+
+## Changing the code
+
+Structural map (files, data flow, DB schema, API) in
+[ARCHITECTURE.md](ARCHITECTURE.md); dev workflow and the FH6 behavioral facts
+the detection logic depends on in [AGENTS.md](AGENTS.md) — read both before
+editing.

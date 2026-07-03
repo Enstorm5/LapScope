@@ -1,7 +1,23 @@
 # AGENTS.md — ForzaCalibrator
 
-Working knowledge for AI agents (and humans) touching this repo. The README covers
-*using* the app; this file covers *changing* it.
+Working knowledge for AI agents (and humans) touching this repo: workflow rules
+and the hard-won behavioral facts that must not be re-derived or regressed.
+
+## Documentation map — read in this order
+
+1. **This file** — dev workflow, FH6 packet facts, the event-detection model,
+   test matrix. The *why* behind the code.
+2. **[ARCHITECTURE.md](ARCHITECTURE.md)** — what lives where: file
+   responsibilities, data flow, DB schema, API surface, WebSocket contract,
+   concurrency rules, simulator flags, and the cross-file invariants that must
+   stay in sync. Consult it before touching anything structural.
+3. **[README.md](README.md)** — user-facing: setup, in-game settings,
+   troubleshooting flows (no packets, unrecognized event types).
+4. **[TODO.md](TODO.md)** — open backlog and in-flight investigations.
+
+Keep all four current: a detection change usually touches this file's model
+section, a new endpoint/table belongs in ARCHITECTURE.md, a new user-visible
+feature in the README, and finished TODO items get pruned.
 
 ## What this is
 
