@@ -92,9 +92,11 @@ listener: `session_id`, `delta` (vs session-best), `session_best`,
 
 - [tools/simulator.py](tools/simulator.py) — synthetic packet sender, runs in
   real time at 60 Hz. Flags: `--host --port --rate --freeroam S --events N
-  --duration S --wet --dirty --race LAPS --sprint SECS --cut --wta LAPS
-  --jumps`. Stadium loop for circuits, open winding course for sprints (a
-  looping sprint would falsely trip geometric lap detection).
+  --duration S --wet --dirty --race LAPS --sprint SECS --cut --dirt SECS
+  --wta LAPS --jumps`. Stadium loop for circuits, open winding course for
+  sprints (a looping sprint would falsely trip geometric lap detection).
+  `--dirt` models the verified real point-to-point race (CurrentLap counts,
+  `DistanceTraveled`-reset finish after a results-cinematic stream gap).
 - [tools/inspect_session.py](tools/inspect_session.py) — dumps every
   segmentation-relevant signal transition of a stored session straight from
   the DB (`--list` to enumerate). The capture-diagnosis workflow is in the

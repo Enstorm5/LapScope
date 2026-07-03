@@ -14,30 +14,42 @@ subdivide what would otherwise be one long stream:
 Event finishes are tricky: the game ends an event *without* incrementing
 LapNumber, so the final lap of a race - and the whole run of a
 point-to-point event (sprint, drag, street, touge, cross-country) - would
-otherwise be lost. Four finish signals fix that:
+otherwise be lost. Five finish signals fix that:
 
 - LastLap changing while LapNumber stays put = the line was crossed and the
   event ended -> the open lap is completed with that time.
-- CurrentRaceTime freezing for a while during IsRaceOn == 1 = the finish
-  cinematic / results screen -> the session is marked finished. A session
-  that started at race time ~0, finished, and never counted a lap is a
-  point-to-point run: its one open lap is completed with the frozen race
-  clock as the run time and the route is fingerprinted from start position
-  + distance covered.
+- The DistanceTraveled hard-reset. On a real dirt-sprint capture the finish
+  looks like this: the car crosses the line at speed (RacePosition just
+  dropped to 0), the stream gaps for the results cinematic (~12 s) while the
+  race clock keeps counting, and when it resumes the game has parked the car
+  at the line with the brake held and DistanceTraveled reset to 0. Since the
+  odometer only ever accumulates on circuits (it never resets per lap), that
+  reset to ~0 is an unambiguous finish. It fires whether or not the lap
+  fields are alive - a dirt sprint runs CurrentLap (LapNumber/LastLap/BestLap
+  stay 0 the whole run); World Time Attack runs nothing - as long as
+  LapNumber never incremented (not a circuit) and this is a real event:
+  gridded (a race) or a geometric launch (WTA). The single run is completed
+  right there, timed launch-to-line: not the post-gap clock (the cinematic
+  advanced it several seconds) but the PREVIOUS frame's clock, minus the
+  launch clock so the countdown is excluded (the game's own lap times do the
+  same - a circuit lap's LastLap equals launch-to-line, not clock-start-to-
+  line). The route is fingerprinted from the run's start + covered distance.
+- CurrentRaceTime freezing for a while during IsRaceOn == 1 = an alternative
+  finish-cinematic signal (kept as a fallback): the session is marked
+  finished and a never-counted-a-lap run is completed with the frozen clock.
 - Telemetry stopping dead at the line: circuit races cut Data Out the
   instant the race ends (verified on real captures - the last frame lands
-  within meters of the finish), so neither signal above ever arrives. At
-  session end, an open lap that covered a full lap's distance (compared to
-  the session's completed laps) is the final lap; it is completed with the
-  lap clock's last reading plus the remaining meters at the last speed.
-- The same cutoff for a *point-to-point race* (sprint/street/cross-country
-  against a grid), where there are no completed laps to compare distance
-  against: a session that was gridded (RacePosition > 0 - never true in
-  free roam), broadcast no lap fields, launched from a DistanceTraveled
-  reset, covered real distance and was still at speed when the stream
-  stopped is a finished run, timed by the race clock's last reading. A
-  mid-run quit can look identical, so these laps carry a "cutoff" flag to
-  say the time is inferred, not confirmed by a finish signal.
+  within meters of the finish), so no signal above ever arrives. At session
+  end, an open lap that covered a full lap's distance (compared to the
+  session's completed laps) is the final lap; it is completed with the lap
+  clock's last reading plus the remaining meters at the last speed.
+- The same cutoff for a lap-fields-dead *point-to-point race* with no
+  completed laps to compare against: gridded (RacePosition > 0 - never true
+  in free roam), launched from a DistanceTraveled reset (geometric anchor
+  armed), covered real distance, still at speed when the stream stopped ->
+  a finished run timed by the race clock's last reading. A mid-run quit can
+  look identical, so these laps carry a "cutoff" flag: the time is inferred,
+  not confirmed by a finish signal.
 
 Point-to-point events may never start the CurrentLap clock, so the lap
 trace (and live delta) falls back to CurrentRaceTime elapsed since the lap
@@ -104,6 +116,8 @@ WTA_HEADING_COS = 0.25        # crossing direction within ~75 deg of the launch 
 WTA_DIST_COLLAPSE = 1000.0    # DistanceTraveled dropping this much = run finished
 WTA_TELEPORT_JUMP = 250.0     # single-frame position jump = fast travel (free roam,
                               # not an event - you never teleport mid-run)
+POINT_FINISH_DIST = 200.0     # DistanceTraveled must land this close to 0 for a
+                              # reset to count as a point-to-point finish
 
 # keep sessions that would otherwise be discarded (no completed laps) - for
 # capturing event types the segmentation doesn't recognize yet
@@ -133,10 +147,15 @@ class SessionTracker:
         self._prev_race_time: float | None = None
         self._prev_cur_lap: float | None = None
         self._prev_dist: float | None = None
+        self._prev_frame_rt: float | None = None  # last frame's race clock (pre-reset)
+        self._prev_pos: tuple[float, float] | None = None  # last frame's world pos
         self._prev_speed = 0.0
         self._lap_distances: list[float] = []  # completed-lap lengths this session
         self._lap_max_elapsed = 0.0
         self._lap_open_rt: float | None = None
+        self._launch_rt: float | None = None  # race clock when DistanceTraveled
+                                               # started growing (= GO); the run
+                                               # excludes the countdown before it
         self._lap_open_last_lap: float | None = None
         self._lap_flags: set[str] = set()
         self._first_rt: float | None = None
@@ -266,8 +285,11 @@ class SessionTracker:
         self._ref_d = self._ref_t = None
         self.best_lap_time = None
         self._prev_cur_lap = None
+        self._prev_frame_rt = None
+        self._prev_pos = None
         self._prev_speed = 0.0
         self._lap_distances = []
+        self._launch_rt = None
         self._first_rt = frame["current_race_time"]
         self._event_finished = False
         self._finish_rt = None
@@ -332,7 +354,7 @@ class SessionTracker:
                         self._prev_race_time if self._prev_race_time is not None
                         else float("nan"),
                         self._diag_max_ln, self._diag_max_cur, self._event_finished,
-                        self._gridded, self._wta_anchor is not None,
+                        self._gridded, self._launch_rt is not None,
                         self._prev_speed,
                         (self._prev_dist - self._diag_first_dist)
                         if self._prev_dist is not None and self._diag_first_dist is not None
@@ -362,10 +384,13 @@ class SessionTracker:
         self._prev_race_time = None
         self._prev_cur_lap = None
         self._prev_dist = None
+        self._prev_frame_rt = None
+        self._prev_pos = None
         self._prev_speed = 0.0
         self._lap_distances = []
         self._lap_max_elapsed = 0.0
         self._lap_open_rt = None
+        self._launch_rt = None
         self._lap_open_last_lap = None
         self._first_rt = None
         self._event_finished = False
@@ -390,10 +415,27 @@ class SessionTracker:
         if (self._completed_laps == 0 and self._event_finished
                 and self._first_rt is not None and self._first_rt < 5.0
                 and self._finish_rt is not None):
-            run = self._finish_rt - (self._lap_open_rt or 0.0)
+            run = self._finish_rt - (self._launch_rt if self._launch_rt is not None
+                                     else (self._lap_open_rt or 0.0))
             if run > PTP_MIN_RUN_TIME:
                 return run
         return None
+
+    def _finish_ptp_run(self, t: float, run_time: float) -> None:
+        """Complete the single run of a point-to-point event at its finish
+        (the DistanceTraveled reset), fingerprinting the route from the run's
+        start position and covered distance. _prev_dist still holds the
+        pre-reset odometer here, so it measures the whole course."""
+        self.store.complete_lap(self._lap_id, t, run_time, self._flags())
+        self._completed_laps += 1
+        if not self._route_assigned and self._prev_dist is not None:
+            length = self._prev_dist - self._lap_start_dist
+            if length > 100.0:
+                rid = self.store.match_or_create_route(
+                    self._lap_start_pos[0], self._lap_start_pos[1], length)
+                self.store.set_session_route(self.session_id, rid)
+                self._route_assigned = True
+        self._lap_id = None
 
     def _ptp_run_time_at_cutoff(self) -> float | None:
         """Run time for a gridded point-to-point race whose telemetry cut
@@ -453,25 +495,66 @@ class SessionTracker:
         if self._lap_fields_dead and (ln > 0 or cur > 0.001 or last > 0.001):
             self._lap_fields_dead = False  # normal lap telemetry; forever
 
-        # WTA / point-to-point finish: the game hard-resets DistanceTraveled
-        # when the run completes while the clock keeps counting through the
-        # results screen (verified on a real World Time Attack capture)
-        if (self._lap_fields_dead and self._prev_dist is not None
-                and rt > FINISH_MIN_RT
-                and dist < self._prev_dist - WTA_DIST_COLLAPSE):
-            if not self._event_finished:
+        # launch = DistanceTraveled starts growing after the grid hold. Capture
+        # the race clock here so a point-to-point run is timed from GO, not from
+        # the countdown: the game's own lap times exclude it (verified - a
+        # circuit lap's LastLap equals launch-to-line, not clock-start-to-line).
+        if (self._launch_rt is None and self._prev_dist is not None
+                and self._prev_dist < 1.0 and dist >= 1.0):
+            self._launch_rt = rt
+
+        # Point-to-point / WTA finish: the game hard-resets DistanceTraveled to
+        # ~0 when the run completes (5951 -> 0 on a real dirt-sprint capture;
+        # ~18000 -> 0 on WTA) while the race clock keeps counting through the
+        # results screen. DistanceTraveled only ever accumulates on circuits
+        # (never resets per lap), so a reset to near-zero is unambiguously a
+        # finish - it fires whether or not the lap fields are alive (the real
+        # dirt sprint runs CurrentLap; WTA runs nothing), as long as LapNumber
+        # never incremented (not a circuit) and this is a real event: gridded
+        # (a race) or a geometric launch (WTA). The car stays put while the
+        # odometer resets (4.5 m on the capture) - a free-roam fast travel
+        # resets it too but teleports you away, so a big jump disqualifies it.
+        moved = (math.hypot(frame["pos_x"] - self._prev_pos[0],
+                            frame["pos_z"] - self._prev_pos[1])
+                 if self._prev_pos is not None else 0.0)
+        if (self._diag_max_ln == 0 and self._prev_dist is not None
+                and rt > FINISH_MIN_RT and self._prev_dist > WTA_MIN_LAP_DIST
+                and dist < POINT_FINISH_DIST
+                and dist < self._prev_dist - WTA_DIST_COLLAPSE
+                and moved < WTA_TELEPORT_JUMP
+                and (self._gridded
+                     or (self._lap_fields_dead and self._wta_anchor is not None))):
+            finished_now = not self._event_finished
+            if finished_now:
                 self._event_finished = True
-                self._finish_rt = rt
-                log.info("Session %d: distance counter reset (%.0f -> %.0f)"
-                         " - run finished", self.session_id, self._prev_dist, dist)
+                # the finish cinematic can gap the stream and advance the clock
+                # several seconds (12.6 s on the capture); the run ended at the
+                # PREVIOUS frame's clock, not this post-gap one
+                self._finish_rt = self._prev_frame_rt
+                log.info("Session %d: DistanceTraveled reset (%.0f -> %.0f)"
+                         " - point-to-point run finished", self.session_id,
+                         self._prev_dist, dist)
             if self._completed_laps > 0 and self._lap_id is not None:
-                # crossings already timed the laps; the open remainder is the
-                # post-finish coast, not a lap
+                # WTA multi-lap: geometric crossings already timed the laps;
+                # the open remainder is the post-finish coast, not a lap
                 self._finalize_wta_crossing(frame)
                 if self._lap_id is not None:
                     self.store.delete_lap(self._lap_id)
                     self._lap_id = None
+            elif finished_now and self._lap_id is not None:
+                # single run (dirt sprint / sprint): complete it here, timed
+                # launch-to-line, before post-finish parked frames pollute it
+                launch = (self._launch_rt if self._launch_rt is not None
+                          else (self._lap_open_rt or 0.0))
+                run = (self._finish_rt - launch
+                       if self._finish_rt is not None else None)
+                if run is not None and run > PTP_MIN_RUN_TIME:
+                    log.info("Session %d: point-to-point run captured (%.3fs,"
+                             " launch to finish)", self.session_id, run)
+                    self._finish_ptp_run(t, run)
             self._prev_dist = dist
+            self._prev_frame_rt = rt
+            self._prev_pos = (frame["pos_x"], frame["pos_z"])
             self._prev_cur_lap = cur
             return None
 
@@ -506,6 +589,8 @@ class SessionTracker:
                 self._cur_d.pop()
                 self._cur_t.pop()
         self._prev_dist = dist
+        self._prev_frame_rt = rt
+        self._prev_pos = (frame["pos_x"], frame["pos_z"])
         self._prev_speed = frame["speed"]
         self._lap_max_elapsed = max(self._lap_max_elapsed, elapsed)
 

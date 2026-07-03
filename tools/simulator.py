@@ -353,8 +353,11 @@ class Sim:
             t += self.dt
             self._send(race_time=t, **dead)
 
-    def _send_parked(self, race_time: float, x: float, z: float) -> None:
-        """Stationary frame at an explicit position with all lap fields dead."""
+    def _send_parked(self, race_time: float, x: float, z: float,
+                     cur_lap: float = 0.0, brake: int = 0) -> None:
+        """Stationary frame at an explicit position. Lap fields dead by
+        default; cur_lap>0 models the grid-hold clock of a race, brake>0 the
+        post-finish handback where the game holds the car braked."""
         f = self.f
         f.update(
             timestamp_ms=int((time.monotonic() - self.t0) * 1000) & 0xFFFFFFFF,
@@ -363,14 +366,55 @@ class Sim:
             pos_x=x, pos_y=105.0, pos_z=z,
             speed=0.0, power=0.0, torque=0.0, boost=0.0,
             distance_traveled=0.0, best_lap=0.0, last_lap=0.0,
-            current_lap=0.0, current_race_time=race_time, lap_number=0,
-            accel=0, brake=0, steer=0, gear=1,
+            current_lap=cur_lap, current_race_time=race_time, lap_number=0,
+            accel=0, brake=brake, steer=0, gear=1,
         )
         self.sock.sendto(pack(f), self.target)
         self.sent += 1
         lag = self.t0 + self.sent * self.dt - time.monotonic()
         if lag > 0:
             time.sleep(lag)
+
+    def dirt_sprint(self, seconds: float) -> None:
+        """Real point-to-point race, modeled on a verified FH6 dirt-sprint
+        capture (2026-07-03). Unlike --sprint (all lap fields dead), the
+        running lap clock CurrentLap counts the whole way while LapNumber,
+        LastLap and BestLap stay 0; the car is gridded (RacePosition > 0).
+        The finish is a DistanceTraveled hard-reset: the car crosses at
+        speed, the stream gaps for the results cinematic (~12 s real, the
+        race clock counting through it), then the game hands control back
+        parked at the line with the brake held and the odometer reset to 0."""
+        print(f"dirt sprint: ~{seconds:.0f}s point-to-point, CurrentLap"
+              " counting, DistanceTraveled-reset finish")
+        self.s = 0.0
+        self.total_dist = 0.0
+        self.f["race_position"] = random.randint(2, 8)
+        self.open_course = True
+        self._oc_x, self._oc_z, self._oc_s = -STRAIGHT / 2, -RADIUS, 0.0
+        self.pace = random.uniform(0.97, 1.0)
+        t = 0.0
+        # countdown: clock and CurrentLap count, car held at the grid with
+        # DistanceTraveled pinned at 0 (verified: launch trailed clock-start
+        # by ~4 s on the capture)
+        while t < 4.0:
+            t += self.dt
+            self._send_parked(t, self._oc_x, self._oc_z, cur_lap=t)
+        launch_rt = t
+        print(f"  launch at rt={t:.1f}s")
+        while t < 4.0 + seconds:
+            self._pace_tick()
+            t += self.dt
+            # CurrentLap tracks the race clock (single segment, never resets)
+            self._send(race_time=t, lap_no=0, cur_lap=t, last=0.0, best=0.0)
+        run = t - launch_rt
+        print(f"  crossed the line at rt={t:.1f}s (run {run:.1f}s),"
+              " results cinematic (stream pauses)...")
+        time.sleep(2.0)              # the real capture gapped ~12.6 s
+        t += 9.0                     # the race clock counted through the cinematic
+        self.f["race_position"] = 0
+        for _ in range(int(3.0 / self.dt)):   # handback: parked, braked, dist reset
+            t += self.dt
+            self._send_parked(t, self._oc_x, self._oc_z, brake=191)
 
     def _finish_freeze(self, t: float, lap_no: int, last: float, best: float,
                        seconds: float = 3.0) -> None:
@@ -408,6 +452,10 @@ def main() -> None:
                          " does not increment at the final line, like the game)")
     ap.add_argument("--sprint", type=float, default=0.0, metavar="SECONDS",
                     help="run a point-to-point event (no lap counters at all)")
+    ap.add_argument("--dirt", type=float, default=0.0, metavar="SECONDS",
+                    help="run a real dirt-sprint point-to-point race (CurrentLap"
+                         " counts, LapNumber stays 0, DistanceTraveled-reset finish"
+                         " - matches the verified capture)")
     ap.add_argument("--cut", action="store_true",
                     help="with --sprint: cut the stream dead at the finish line"
                          " (like real races do) instead of freezing the clock")
@@ -428,6 +476,8 @@ def main() -> None:
         sim.freeroam(args.freeroam)
     if args.wta > 0:
         sim.wta(args.wta)
+    elif args.dirt > 0:
+        sim.dirt_sprint(args.dirt)
     elif args.sprint > 0:
         sim.sprint(args.sprint, cut=args.cut)
     elif args.race > 0:

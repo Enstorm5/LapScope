@@ -42,7 +42,7 @@ FH6 ──UDP 9999──▶ listener.py ─▶ packet.py parse ─┬─▶ hub.
   and owns the process — stop the preview server AND `docker compose down` before
   rebuilding, then start the preview again.
 - Verify with the simulator (no game needed), from the repo root:
-  `python tools/simulator.py [--wet] [--dirty] [--race N] [--sprint SECS] [--jumps]`.
+  `python tools/simulator.py [--wet] [--dirty] [--race N] [--sprint SECS] [--dirt SECS] [--jumps]`.
   It runs in real time (60 Hz), so a 180 s scenario takes 3 minutes — run it in the
   background and watch `docker compose logs -f` for the recorder's decisions.
 - Sessions close ~15 s after packets stop (`RACE_OFF_GRACE`); wait for the
@@ -90,21 +90,40 @@ All the rules exist because some real behavior broke a naive version:
 - Session = `IsRaceOn` stretch, ends after 15 s of race-off or silence.
 - `CurrentRaceTime` warping back to ~0 splits sessions (event restarts,
   free-roam time-attacks).
-- **Finishes don't increment `LapNumber`.** Four signals: `LastLap` changing
-  while `LapNumber` is static; the race clock freezing ≥1.5 s while `IsRaceOn`
-  stays 1 (point-to-point finish cinematic → one run timed by the frozen clock);
-  and — the usual case for real circuit races — **the stream cutting dead at the
-  finish line** (verified: the last packet lands within meters of the line). An
-  open lap that covered ≥97% of the session's typical lap length at session end
-  is completed from the lap clock's last reading plus the remaining meters at
-  the last speed. The same cutoff on a *gridded point-to-point race* (sprint /
-  street / cross-country — no completed laps to compare distance against) is
-  accepted as a finished run when the session was gridded (`RacePosition > 0`),
-  broadcast no lap fields, launched from a `DistanceTraveled` reset (geometric
-  anchor armed, never disarmed by a teleport) and cut at speed; the run is timed
-  by the race clock's last reading and flagged `cutoff` (shown 🏁 in the lap
-  table) because a mid-run quit at speed looks identical. Abandoned events with
-  none of these signatures are discarded.
+- **Finishes don't increment `LapNumber`.** Five signals: `LastLap` changing
+  while `LapNumber` is static; **the `DistanceTraveled` hard-reset** (the real
+  point-to-point finish, below); the race clock freezing ≥1.5 s while `IsRaceOn`
+  stays 1 (a fallback finish-cinematic signal); **the stream cutting dead at the
+  finish line** (real circuit races, verified: the last packet lands within
+  meters of the line — an open lap that covered ≥97% of the session's typical
+  lap length is completed from the lap clock's last reading plus the remaining
+  meters at the last speed); and the same cutoff on a *lap-fields-dead gridded
+  point-to-point race* with no laps to compare distance against (gridded, geometric
+  anchor armed, cut at speed → timed by the clock's last reading, flagged `cutoff`
+  🏁 because a mid-run quit looks identical). Abandoned events with none of these
+  signatures are discarded.
+- **The real point-to-point finish is a `DistanceTraveled` hard-reset**
+  (verified on a dirt-sprint capture, 2026-07-03: a "2018 Subaru WRX STI ARX"
+  gridded event). The car crosses at speed, `RacePosition` drops to 0, the
+  stream **gaps ~12 s for the results cinematic** (race clock counting through
+  it), then the game hands control back **parked at the line, brake held
+  (~75 %), gear 1, `DistanceTraveled` reset to 0** (this is the "gear 1 / 75 %
+  brake, then gear R" the driver sees). The odometer only ever *accumulates* on
+  circuits (never resets per lap), so a reset to ~0 is an unambiguous finish; it
+  fires whether or not the lap fields are alive — **a dirt sprint runs
+  `CurrentLap` the whole way while `LapNumber`/`LastLap`/`BestLap` stay 0**
+  (so `_lap_fields_dead` is False and the geometric/WTA path never engages) —
+  as long as `LapNumber` never incremented (not a circuit) and it's a real event
+  (gridded, or a WTA geometric launch). Guards against a free-roam fast-travel
+  (which also zeroes the odometer): the run must have covered real distance
+  (`_prev_dist > WTA_MIN_LAP_DIST`) and the car must **stay put** across the
+  reset (`< 250 m` — a fast-travel teleports you away). The run is completed
+  right there and timed **launch-to-line**: `_finish_rt` is the *previous*
+  frame's clock (the cinematic gap advanced the current one), minus `_launch_rt`
+  (the clock when `DistanceTraveled` first grew), so the countdown is excluded —
+  matching the game's own convention (a circuit lap's `LastLap` = launch-to-line,
+  not clock-start-to-line, verified on session 22). Simulate with
+  `python tools/simulator.py --dirt 40`.
 - Point-to-point events may never start `CurrentLap`; lap traces and the live
   delta fall back to race-time-elapsed-since-lap-open.
 - **World Time Attack broadcasts no lap fields at all** (real capture, 2026-07-02:
@@ -158,7 +177,8 @@ All the rules exist because some real behavior broke a naive version:
   and the `#track-select` options (analysis.html).
 
 When changing `_lap_logic`, walk every branch against: circuit race with finish,
-Rivals (endless laps), free-roam cruise, free-roam time-attack, sprint, World
+Rivals (endless laps), free-roam cruise, free-roam time-attack, sprint, dirt
+sprint (CurrentLap counts + distance-reset finish), World
 Time Attack (no lap fields), rewind mid-lap, rewind across the start line,
 server joining mid-lap, event restart.
 
@@ -187,6 +207,7 @@ server joining mid-lap, event restart.
 | Dirty laps | `--duration 180 --dirty` | lap 2 `contact`, lap 3 `rewind`, charts deduped |
 | Race finish | `--race 3 --duration 200` | 3 laps all timed (last via finish detection), no phantom open lap |
 | Point-to-point | `--sprint 75` | session kept, single run ≈75 s, route assigned |
+| Real dirt sprint | `--dirt 40` | single run ≈40 s (CurrentLap counts, `DistanceTraveled`-reset finish), route assigned, no phantom coast lap |
 | Sprint, stream cut at line | `--sprint 60 --cut` | session kept, single run ≈60 s flagged `cutoff`, route assigned |
 | World Time Attack | `--wta 3` | launch + 3 geometric laps + distance-reset finish, no post-finish phantom lap |
 | Jumps in 3D | `--sprint 75 --jumps` (or any + `--jumps`) | 3D map scale sane, spikes capped |
