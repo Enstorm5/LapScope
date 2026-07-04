@@ -97,11 +97,12 @@ All the rules exist because some real behavior broke a naive version:
   finish line** (real circuit races, verified: the last packet lands within
   meters of the line — an open lap that covered ≥97% of the session's typical
   lap length is completed from the lap clock's last reading plus the remaining
-  meters at the last speed); and the same cutoff on a *lap-fields-dead gridded
-  point-to-point race* with no laps to compare distance against (gridded, geometric
-  anchor armed, cut at speed → timed by the clock's last reading, flagged `cutoff`
-  🏁 because a mid-run quit looks identical). Abandoned events with none of these
-  signatures are discarded.
+  meters at the last speed); and the same cutoff on a *gridded point-to-point
+  race* with no laps to compare distance against (gridded, launched from a
+  `DistanceTraveled` reset, `LapNumber` never incremented, real distance
+  covered, cut at speed → timed launch-to-line, flagged `cutoff` 🏁 because a
+  lap-one quit / game-close looks identical). Abandoned events with none of
+  these signatures are discarded.
 - **The real point-to-point finish is a `DistanceTraveled` hard-reset**
   (verified on a dirt-sprint capture, 2026-07-03: a "2018 Subaru WRX STI ARX"
   gridded event). The car crosses at speed, `RacePosition` drops to 0, the
@@ -124,6 +125,16 @@ All the rules exist because some real behavior broke a naive version:
   matching the game's own convention (a circuit lap's `LastLap` = launch-to-line,
   not clock-start-to-line, verified on session 22). Simulate with
   `python tools/simulator.py --dirt 40`.
+- **Not every point-to-point does the handback — a touge cut Data Out dead at
+  the line instead** (verified 2026-07-04: gridded 1v1, `CurrentLap` counting,
+  crossing at 57 m/s with `RacePosition` 1 and `IsRaceOn` still 1, then the
+  stream just stops — no reset, no freeze, no handback). That's the circuit
+  cut-dead finish on a gridded point-to-point with the lap fields alive, so it
+  reaches session end with an open lap and no `_event_finished`. Recovered by
+  `_ptp_run_time_at_cutoff`: gridded, `_launch_rt` set, `LapNumber` never
+  incremented (circuits recover their final lap via `_final_lap_time_at_cutoff`
+  instead), real distance covered, still at speed → run timed launch-to-line,
+  flagged `cutoff`. Simulate with `python tools/simulator.py --dirt 40 --cut`.
 - Point-to-point events may never start `CurrentLap`; lap traces and the live
   delta fall back to race-time-elapsed-since-lap-open.
 - **World Time Attack broadcasts no lap fields at all** (real capture, 2026-07-02:
@@ -208,6 +219,7 @@ server joining mid-lap, event restart.
 | Race finish | `--race 3 --duration 200` | 3 laps all timed (last via finish detection), no phantom open lap |
 | Point-to-point | `--sprint 75` | session kept, single run ≈75 s, route assigned |
 | Real dirt sprint | `--dirt 40` | single run ≈40 s (CurrentLap counts, `DistanceTraveled`-reset finish), route assigned, no phantom coast lap |
+| Touge (cut at line) | `--dirt 40 --cut` | single run ≈40 s flagged `cutoff` (CurrentLap counts, stream cut dead at speed), route assigned |
 | Sprint, stream cut at line | `--sprint 60 --cut` | session kept, single run ≈60 s flagged `cutoff`, route assigned |
 | World Time Attack | `--wta 3` | launch + 3 geometric laps + distance-reset finish, no post-finish phantom lap |
 | Jumps in 3D | `--sprint 75 --jumps` (or any + `--jumps`) | 3D map scale sane, spikes capped |

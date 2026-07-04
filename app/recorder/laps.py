@@ -43,13 +43,17 @@ otherwise be lost. Five finish signals fix that:
   end, an open lap that covered a full lap's distance (compared to the
   session's completed laps) is the final lap; it is completed with the lap
   clock's last reading plus the remaining meters at the last speed.
-- The same cutoff for a lap-fields-dead *point-to-point race* with no
-  completed laps to compare against: gridded (RacePosition > 0 - never true
-  in free roam), launched from a DistanceTraveled reset (geometric anchor
-  armed), covered real distance, still at speed when the stream stopped ->
-  a finished run timed by the race clock's last reading. A mid-run quit can
-  look identical, so these laps carry a "cutoff" flag: the time is inferred,
-  not confirmed by a finish signal.
+- The same cutoff on a gridded *point-to-point race* with no completed laps
+  to compare against. Some point-to-point events end this way instead of the
+  odometer-reset handback above - a real touge cut Data Out dead at the line
+  at speed (RacePosition 1, IsRaceOn still 1, no reset, no freeze). Recovered
+  when gridded (RacePosition > 0 - never true in free roam), launched from a
+  DistanceTraveled reset, LapNumber never incremented (not a circuit that
+  completed laps), real distance covered, and still at speed when the stream
+  stopped -> a run timed launch-to-line. Works whether or not CurrentLap runs
+  (a touge counts it, a bare sprint doesn't). A circuit race quit during lap
+  one, or the game closed mid-run, looks identical, so these laps carry a
+  "cutoff" flag: the time is inferred, not confirmed by a finish signal.
 
 Point-to-point events may never start the CurrentLap clock, so the lap
 trace (and live delta) falls back to CurrentRaceTime elapsed since the lap
@@ -443,25 +447,30 @@ class SessionTracker:
 
     def _ptp_run_time_at_cutoff(self) -> float | None:
         """Run time for a gridded point-to-point race whose telemetry cut
-        dead mid-run: real races stop Data Out the instant the event ends
-        (verified on circuit captures - the last frame lands within meters
-        of the line), so neither finish signal ever arrives and the frozen
-        clock / distance collapse never show. Requirements that free roam
-        can't meet: gridded (RacePosition > 0), no lap fields the whole
-        session, and a launch from a DistanceTraveled reset with the
-        geometric anchor still armed (a teleport - the free-roam giveaway -
-        disarms it). Requiring speed at the cutoff filters parked/AFK ends.
-        A quit mid-run at speed is indistinguishable, hence the "cutoff"
-        flag the caller adds."""
+        dead at the finish line. Verified on a real touge capture: the car
+        crosses at speed (57 m/s, RacePosition 1, IsRaceOn still 1) and the
+        stream simply stops - no DistanceTraveled reset, no clock freeze, no
+        parked handback (unlike a dirt sprint). Some point-to-point events
+        end this way, others hand control back with the odometer reset (that
+        path finishes inline in _lap_logic); this covers the ones that don't.
+
+        Requirements free roam can't meet: gridded (RacePosition > 0 - never
+        true in free roam), a launch from a DistanceTraveled reset (launch_rt
+        set), LapNumber never incremented (not a circuit with completed laps
+        - those recover their final lap via _final_lap_time_at_cutoff), real
+        distance covered, and speed at the cutoff (filters parked/AFK ends).
+        Works whether or not CurrentLap runs (a touge counts it, a bare
+        sprint doesn't). Timed launch-to-line, so the countdown is excluded.
+        A circuit race quit during its first lap, or the game closed mid-run,
+        is indistinguishable - hence the "cutoff" flag the caller adds."""
         if (self._completed_laps == 0 and not self._event_finished
-                and self._lap_fields_dead and self._gridded
-                and self._wta_anchor is not None
-                and self._lap_open_rt is not None
+                and self._gridded and self._diag_max_ln == 0
+                and self._launch_rt is not None
                 and self._prev_race_time is not None
                 and self._prev_speed > 5.0
                 and self._prev_dist is not None
                 and self._prev_dist - self._lap_start_dist > WTA_MIN_LAP_DIST):
-            run = self._prev_race_time - self._lap_open_rt
+            run = self._prev_race_time - self._launch_rt
             if run > PTP_MIN_RUN_TIME:
                 return run
         return None

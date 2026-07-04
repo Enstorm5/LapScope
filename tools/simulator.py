@@ -375,17 +375,19 @@ class Sim:
         if lag > 0:
             time.sleep(lag)
 
-    def dirt_sprint(self, seconds: float) -> None:
-        """Real point-to-point race, modeled on a verified FH6 dirt-sprint
-        capture (2026-07-03). Unlike --sprint (all lap fields dead), the
-        running lap clock CurrentLap counts the whole way while LapNumber,
-        LastLap and BestLap stay 0; the car is gridded (RacePosition > 0).
-        The finish is a DistanceTraveled hard-reset: the car crosses at
-        speed, the stream gaps for the results cinematic (~12 s real, the
-        race clock counting through it), then the game hands control back
-        parked at the line with the brake held and the odometer reset to 0."""
+    def dirt_sprint(self, seconds: float, cut: bool = False) -> None:
+        """Real point-to-point race, modeled on verified FH6 captures. Unlike
+        --sprint (all lap fields dead), the running lap clock CurrentLap
+        counts the whole way while LapNumber, LastLap and BestLap stay 0; the
+        car is gridded (RacePosition > 0). Two finishes seen in real captures:
+        by default the DistanceTraveled hard-reset (dirt sprint, 2026-07-03) -
+        the car crosses at speed, the stream gaps for the results cinematic
+        (~12 s, the race clock counting through it), then control is handed
+        back parked at the line with the brake held and the odometer reset to
+        0; with cut=True the stream instead just stops dead at the line at
+        speed (touge, 2026-07-04) - no reset, no freeze, no handback."""
         print(f"dirt sprint: ~{seconds:.0f}s point-to-point, CurrentLap"
-              " counting, DistanceTraveled-reset finish")
+              f" counting, {'cut-dead-at-line' if cut else 'DistanceTraveled-reset'} finish")
         self.s = 0.0
         self.total_dist = 0.0
         self.f["race_position"] = random.randint(2, 8)
@@ -407,6 +409,10 @@ class Sim:
             # CurrentLap tracks the race clock (single segment, never resets)
             self._send(race_time=t, lap_no=0, cur_lap=t, last=0.0, best=0.0)
         run = t - launch_rt
+        if cut:
+            # touge: the stream cuts dead at the line, at speed (no handback)
+            print(f"  crossed the line at rt={t:.1f}s (run {run:.1f}s) - stream cuts dead")
+            return
         print(f"  crossed the line at rt={t:.1f}s (run {run:.1f}s),"
               " results cinematic (stream pauses)...")
         time.sleep(2.0)              # the real capture gapped ~12.6 s
@@ -457,8 +463,9 @@ def main() -> None:
                          " counts, LapNumber stays 0, DistanceTraveled-reset finish"
                          " - matches the verified capture)")
     ap.add_argument("--cut", action="store_true",
-                    help="with --sprint: cut the stream dead at the finish line"
-                         " (like real races do) instead of freezing the clock")
+                    help="with --sprint or --dirt: cut the stream dead at the"
+                         " finish line (touge/circuit-style) instead of the"
+                         " frozen clock / odometer-reset handback")
     ap.add_argument("--wta", type=int, default=0, metavar="LAPS",
                     help="run a World Time Attack: all lap fields dead, laps"
                          " only detectable geometrically")
@@ -477,7 +484,7 @@ def main() -> None:
     if args.wta > 0:
         sim.wta(args.wta)
     elif args.dirt > 0:
-        sim.dirt_sprint(args.dirt)
+        sim.dirt_sprint(args.dirt, cut=args.cut)
     elif args.sprint > 0:
         sim.sprint(args.sprint, cut=args.cut)
     elif args.race > 0:
@@ -487,7 +494,7 @@ def main() -> None:
         for i in range(args.events):
             sim.event(args.duration / args.events, f"event {i + 1}/{args.events}",
                       dirty=args.dirty)
-    if not (args.sprint > 0 and args.cut):
+    if not ((args.sprint > 0 or args.dirt > 0) and args.cut):
         sim.race_off()  # a cut stream ends in silence, not race-off frames
     print(f"Done: {sim.sent} packets.")
 
