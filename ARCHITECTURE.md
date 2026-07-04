@@ -126,6 +126,10 @@ listener: `session_id`, `delta` (vs session-best), `session_best`,
   `CLASS_COLORS` (common.js).
 - Teleport threshold 250 m: `WTA_TELEPORT_JUMP` (laps.py) = live-map jump reset
   (dashboard.js) = `POS_JUMP` (inspect_session.py).
+- Contact spike threshold: `IMPACT_ACCEL` (laps.py) drives both the per-lap
+  `contact` flag and the map collision markers — the `/laps/{id}/data`
+  endpoint imports it; `dashboard.js` duplicates it as `IMPACT_ACCEL` for the
+  live map (keep the two in lockstep).
 - `RT_FREEZE_SECONDS` (laps.py) = the same constant in inspect_session.py.
 - Packet layout: `_STRUCT` and `FIELDS` in packet.py must stay in lockstep
   (asserted by the module self-test).

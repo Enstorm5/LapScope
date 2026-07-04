@@ -500,8 +500,38 @@ function drawMap() {
       <div><div class="label">Samples</div><div class="value">${A.n_frames}</div></div>
       <div><div class="label">Driven</div><div class="value">${(drivenM / 1000).toFixed(2)} km</div></div>
       <div><div class="label">Elevation range</div><div class="value">${yRange > 0.3 ? yRange.toFixed(0) + " m" : "flat"}</div></div>
+      <div><div class="label">Contacts</div><div class="value">${(A.collisions?.length || 0) ? `<span style="color:#ef4444">${A.collisions.length}</span>` : "0"}</div></div>
     </div>`;
   }
+
+  // collision points (contact spikes) as red bursts, over the ribbon so
+  // they read against any speed/slip color. B's are dimmer, like its line.
+  const drawHits = (d, fill, r) => {
+    if (!d || !d.collisions) return;
+    for (const h of d.collisions) {
+      const [X, Y] = P(h.x, h.y ?? 0, h.z, false);
+      ctx.save();
+      ctx.strokeStyle = "#fff";
+      ctx.lineWidth = 1.5;
+      ctx.fillStyle = fill;
+      ctx.shadowColor = fill;
+      ctx.shadowBlur = 8;
+      // 4-point spark
+      ctx.beginPath();
+      for (let k = 0; k < 8; k++) {
+        const a = (k * Math.PI) / 4;
+        const rr = k % 2 ? r * 0.4 : r;
+        const px = X + Math.cos(a) * rr, py = Y + Math.sin(a) * rr;
+        k === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+    }
+  };
+  drawHits(B, "#7f5b5b", 6);
+  drawHits(A, "#ef4444", 7);
 
   // cache the finished frame + projection for the chart-cursor marker
   mapCursor.proj = P;

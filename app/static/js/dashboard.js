@@ -25,12 +25,17 @@ const shiftLights = document.querySelectorAll("#shift-lights i");
 /* live track map: path of the current session, thinned adaptively so long
    drives stay cheap to redraw at display refresh rate */
 const LIVEMAP_CAP = 4000;
+// ground-plane acceleration (m/s^2) that counts as a contact/collision;
+// mirrors IMPACT_ACCEL in app/recorder/laps.py (keep the two in lockstep).
+const IMPACT_ACCEL = 45;
 const liveMap = {
   pts: [],         // [x, z] world points; null = teleport break
   last: null,      // last stored point (skips the nulls)
   minDist: 3,      // m between stored points; doubles when thinned
   session: null,
   minX: Infinity, maxX: -Infinity, minZ: Infinity, maxZ: -Infinity,
+  hits: [],        // [x, z] world points where a contact spike fired
+  overImpact: false, // above the threshold last frame (edge-detect one hit/impact)
 };
 
 function resetLiveMap(sessionId) {
@@ -40,6 +45,25 @@ function resetLiveMap(sessionId) {
   liveMap.minDist = 3;
   liveMap.minX = liveMap.minZ = Infinity;
   liveMap.maxX = liveMap.maxZ = -Infinity;
+  liveMap.hits = [];
+  liveMap.overImpact = false;
+}
+
+// One marker per impact: register on the rising edge only, so grinding a wall
+// (many frames over the threshold) leaves a single dot. Gated exactly like the
+// map path — races/time-attacks only, same session — and runs after
+// feedLiveMap so a session change / grid snap has already cleared old hits.
+function feedCollision(f) {
+  if (f.session_id == null || !f.race_mode || f.session_id !== liveMap.session) {
+    liveMap.overImpact = false;
+    return;
+  }
+  if (Math.hypot(f.accel_x, f.accel_z) >= IMPACT_ACCEL) {
+    if (!liveMap.overImpact) liveMap.hits.push([f.pos_x, f.pos_z]);
+    liveMap.overImpact = true;
+  } else {
+    liveMap.overImpact = false;
+  }
 }
 
 function feedLiveMap(f) {
@@ -88,6 +112,7 @@ function connect() {
       if (state.strip.length > STRIP_CAP) state.strip.shift();
     }
     feedLiveMap(f);
+    feedCollision(f);
   };
   ws.onopen = () => setConn("live", "ok");
   ws.onclose = () => { setConn("reconnecting…", "err"); setTimeout(connect, 1500); };

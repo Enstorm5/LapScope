@@ -257,6 +257,28 @@ function drawLiveMap(g, pts, ext, car) {
   ctx.arc(X(pts[0][0]), Y(pts[0][1]), 4, 0, Math.PI * 2);
   ctx.fill();
 
+  // collision points (contact spikes) as red sparks, under the car marker
+  if (ext.hits && ext.hits.length) {
+    for (const h of ext.hits) {
+      const hx = X(h[0]), hy = Y(h[1]);
+      glow(ctx, "#ef4444", 8, () => {
+        ctx.fillStyle = "#ef4444";
+        ctx.strokeStyle = "#fff";
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        for (let k = 0; k < 8; k++) {
+          const a = (k * Math.PI) / 4;
+          const rr = k % 2 ? 2.4 : 6;
+          const px = hx + Math.cos(a) * rr, py = hy + Math.sin(a) * rr;
+          k === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+      });
+    }
+  }
+
   if (car) {
     const cx = X(car.x), cy = Y(car.z);
     glow(ctx, COL.accent, 12, () => {

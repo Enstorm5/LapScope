@@ -4,12 +4,14 @@ from __future__ import annotations
 
 import json
 import logging
+import math
 import time
 from pathlib import Path
 
 from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import BaseModel
 
+from ..recorder.laps import IMPACT_ACCEL
 from ..recorder.reprocess import reprocess_session
 from ..telemetry.packet import parse
 
@@ -219,6 +221,31 @@ def lap_data(
                 kept.pop()
         kept.append((t, d, p))
 
+    # Collision points: ground-plane acceleration spikes past the contact
+    # threshold (the same test the recorder uses for the per-lap "contact"
+    # flag). A single impact spans several frames over the threshold, so group
+    # consecutive over-threshold frames into one event and keep its peak. Run
+    # on the full-resolution kept trace so a one-frame spike is never decimated
+    # away. World coords are returned so the map projects them like any point.
+    collisions: list[dict] = []
+    peak: tuple | None = None  # (g, d, frame) of the current impact burst
+    for t, d, p in kept:
+        g = math.hypot(p["accel_x"], p["accel_z"])
+        if g >= IMPACT_ACCEL:
+            if peak is None or g > peak[0]:
+                peak = (g, d, p)
+        elif peak is not None:
+            g0, d0, p0 = peak
+            collisions.append({"x": round(p0["pos_x"], 2), "y": round(p0["pos_y"], 2),
+                               "z": round(p0["pos_z"], 2), "dist": round(d0 - start_dist, 2),
+                               "g": round(g0 / 9.80665, 2)})
+            peak = None
+    if peak is not None:  # impact ran to the last kept frame
+        g0, d0, p0 = peak
+        collisions.append({"x": round(p0["pos_x"], 2), "y": round(p0["pos_y"], 2),
+                           "z": round(p0["pos_z"], 2), "dist": round(d0 - start_dist, 2),
+                           "g": round(g0 / 9.80665, 2)})
+
     stride = max(1, len(kept) // max_points)
     dist: list[float] = []
     t_rel: list[float] = []
@@ -231,4 +258,5 @@ def lap_data(
         for n in names:
             out[n].append(round(CHANNELS[n](p), 4))
 
-    return {"lap": lap, "n_frames": len(rows), "dist": dist, "t": t_rel, "channels": out}
+    return {"lap": lap, "n_frames": len(rows), "dist": dist, "t": t_rel,
+            "channels": out, "collisions": collisions}
