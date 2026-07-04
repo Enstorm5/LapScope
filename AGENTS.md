@@ -36,6 +36,12 @@ FH6 ──UDP 9999──▶ listener.py ─▶ packet.py parse ─┬─▶ hub.
 
 - **After each iteration of changes, create a local git commit.** **Never push
   to a remote** — the owner handles pushing themselves.
+- **Work item → branch → PR.** Pick an item from [TODO.md](TODO.md) (once the
+  repo is on GitHub, from issues instead), cut a `feat/…` or `fix/…` branch off
+  `main`, commit there, and land it via a pull request with CI green — not by
+  committing straight to `main`. `main` is the protected, release branch.
+  Until the GitHub remote exists this is local-only (branch + commits, owner
+  pushes/opens the PR).
 - **Static files are baked into the image.** Any change under `app/` requires
   `docker compose build` + restart. There is no bind mount for code.
 - The Claude Code preview config (`.claude/launch.json`) runs `docker compose up`
