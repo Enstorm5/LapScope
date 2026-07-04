@@ -13,10 +13,9 @@ Ideas.**
 
 ## Release blockers (do before announcing publicly)
 
-- **LICENSE.** The repo has none, so legally nobody can use it yet. Pick one
-  (MIT recommended for max adoption) and add `LICENSE` + a header line in README.
-  Note the vendored third-party assets already in the tree: Rajdhani font (OFL)
-  and uPlot (MIT) — credit both in a NOTICES/THIRD-PARTY section.
+- **LICENSE.** ✅ Decided **MIT**, `LICENSE` file added. Remaining: add a
+  `## License` line to the README, and credit vendored third-party assets
+  (Rajdhani font — OFL; uPlot — MIT) in a NOTICES/THIRD-PARTY section.
 - **Public README rewrite.** Lead with what it is + a hero GIF, then a features
   list and a one-line install for the chosen distribution method. Move the deep
   troubleshooting / capture-diagnosis material to the wiki and link it. Keep the
@@ -31,6 +30,9 @@ Ideas.**
   `CODE_OF_CONDUCT.md`. Document the branch-protection rules in CONTRIBUTING.
 
 ## Distribution & packaging (make it plug & play)
+
+✅ Decided: ship **both** — a single-click `.exe` as the headline path for normal
+users, Docker documented for power/cross-platform users.
 
 - **Single-file Windows build (PyInstaller).** The app is a near-perfect
   candidate: pure Python (FastAPI + uvicorn), stdlib SQLite, no frontend build
