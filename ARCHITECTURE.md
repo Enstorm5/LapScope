@@ -1,4 +1,4 @@
-# ARCHITECTURE.md — ForzaCalibrator
+# ARCHITECTURE.md — LapScope
 
 Structural map of the repo: what lives where, how data flows, and the contracts
 between the parts. Behavioral knowledge (FH6 packet quirks, event-detection
@@ -122,7 +122,7 @@ assert them here.
 ## Configuration & deployment
 
 - Env vars: `TELEMETRY_UDP_PORT` (9999), `DATA_DIR` (/app/data),
-  `FC_KEEP_DISCARDED` (0; 1 keeps no-lap sessions — compose passes it through,
+  `LS_KEEP_DISCARDED` (0; 1 keeps no-lap sessions — compose passes it through,
   a repo-root `.env` file works too).
 - [Dockerfile](Dockerfile): python:3.12-slim, `COPY app ./app` — **code and
   static files are baked in**; changing anything under `app/` requires

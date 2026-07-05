@@ -1,15 +1,15 @@
 services:
-  forzacalibrator:
+  lapscope:
     build: .
-    container_name: forzacalibrator
+    container_name: lapscope
     ports:
       - "8000:8000"        # web dashboard: http://localhost:8000
       - "9999:9999/udp"    # FH6 Data Out target port
     volumes:
       - ./data:/app/data   # SQLite session recordings
     environment:
-      # set FC_KEEP_DISCARDED=1 in the host env to keep sessions with no
+      # set LS_KEEP_DISCARDED=1 in the host env to keep sessions with no
       # completed laps (for capturing event types the recorder doesn't
       # recognize yet - see README "An event type isn't being recorded")
-      - FC_KEEP_DISCARDED=${FC_KEEP_DISCARDED:-0}
+      - LS_KEEP_DISCARDED=${LS_KEEP_DISCARDED:-0}
     restart: unless-stopped

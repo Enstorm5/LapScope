@@ -75,7 +75,7 @@ Sessions that end without a single completed lap or run (free-roam
 cruising, menu blips, abandoned events) are discarded entirely. Every
 discard logs a one-line signal summary so event types the segmentation
 doesn't recognize yet can be diagnosed from `docker compose logs`; setting
-FC_KEEP_DISCARDED=1 keeps such sessions (raw frames included) instead of
+LS_KEEP_DISCARDED=1 keeps such sessions (raw frames included) instead of
 deleting them - drive the unrecognized event once with the flag on and the
 data needed to add support for it is preserved.
 
@@ -97,7 +97,7 @@ import logging
 import math
 import os
 
-log = logging.getLogger("forzacalibrator.recorder")
+log = logging.getLogger("lapscope.recorder")
 
 RACE_OFF_GRACE = 15.0
 FLUSH_INTERVAL = 1.0
@@ -125,7 +125,7 @@ POINT_FINISH_DIST = 200.0     # DistanceTraveled must land this close to 0 for a
 
 # keep sessions that would otherwise be discarded (no completed laps) - for
 # capturing event types the segmentation doesn't recognize yet
-KEEP_DISCARDED = os.environ.get("FC_KEEP_DISCARDED", "0").lower() not in ("", "0", "false")
+KEEP_DISCARDED = os.environ.get("LS_KEEP_DISCARDED", "0").lower() not in ("", "0", "false")
 
 
 class SessionTracker:
@@ -370,7 +370,7 @@ class SessionTracker:
                                        conditions=None)
                 self.store.mark_session_kept(self.session_id)
                 log.info("Session %d KEPT with no completed laps "
-                         "(FC_KEEP_DISCARDED=1) | diag: %s", self.session_id, diag)
+                         "(LS_KEEP_DISCARDED=1) | diag: %s", self.session_id, diag)
             else:
                 self.store.discard_session(self.session_id)
                 log.info("Session %d discarded (no completed laps, %d frames) | diag: %s",

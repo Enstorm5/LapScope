@@ -37,7 +37,7 @@ users, Docker documented for power/cross-platform users.
 - **Single-file Windows build (PyInstaller).** The app is a near-perfect
   candidate: pure Python (FastAPI + uvicorn), stdlib SQLite, no frontend build
   step. Bundle `app/` + static assets + fonts + `car_ordinals.json` into one
-  `ForzaCalibrator.exe` that binds UDP 9999, serves the dashboard on
+  `LapScope.exe` that binds UDP 9999, serves the dashboard on
   `localhost:8000`, and auto-opens the browser. Decide DB location (next to the
   exe = portable, or `%LOCALAPPDATA%`).
 - **GitHub Releases pipeline.** GitHub Action that builds the exe on a version
@@ -144,7 +144,7 @@ Real cross-country data (session 55) shows it is both too eager and too blind:
   last unconfirmed one: **verified 2026-07-05 on a real race (session 55)** — it
   uses the touge signature (gridded, `CurrentLap` counts, stream cut dead at the
   line at 67 m/s) and is already recovered by the existing gridded cut-dead path,
-  no new code. Capture mode (`FC_KEEP_DISCARDED`) is now **off**.
+  no new code. Capture mode (`LS_KEEP_DISCARDED`) is now **off**.
 
 ## Known accepted trade-offs (not bugs; revisit only with new signal data)
 

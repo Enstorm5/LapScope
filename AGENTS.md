@@ -1,4 +1,4 @@
-# AGENTS.md — ForzaCalibrator
+# AGENTS.md — LapScope
 
 Working knowledge for AI agents (and humans) touching this repo: workflow rules
 and the hard-won behavioral facts that must not be re-derived or regressed.
@@ -183,7 +183,7 @@ All the rules exist because some real behavior broke a naive version:
   session row untouched, discard suppressed) — recovers laps recorded before a
   detection fix. Must stay `async def` (writes on the event-loop connection).
 - `sessions.kept = 1` exempts a session from the startup no-laps cleanup
-  (FC_KEEP_DISCARDED captures and reprocessed sessions set it).
+  (LS_KEEP_DISCARDED captures and reprocessed sessions set it).
 - Dirty-lap inference: rewind = lap clock below its high-water mark while
   distance doesn't grow (per-frame comparison misses gradual scrubs — that bug
   shipped once); contact = ground-plane |accel| ≥ 45 m/s². Stored as
@@ -198,7 +198,7 @@ All the rules exist because some real behavior broke a naive version:
 - Sessions with zero completed laps/runs are discarded at close and again at
   startup (`cleanup_sessions`). Every discard logs a `diag:` signal summary
   (duration, race-time range, max LapNumber/CurrentLap, finish seen, gridded,
-  launch anchor, last speed, distance); `FC_KEEP_DISCARDED=1` (compose env
+  launch anchor, last speed, distance); `LS_KEEP_DISCARDED=1` (compose env
   passthrough; a repo-root `.env` file works too) keeps such sessions instead —
   that's the capture path for event types the segmentation doesn't recognize
   yet. Inspect a kept capture with `python tools/inspect_session.py <id>`

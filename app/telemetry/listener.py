@@ -9,7 +9,7 @@ import time
 
 from .packet import PACKET_SIZE, parse
 
-log = logging.getLogger("forzacalibrator.udp")
+log = logging.getLogger("lapscope.udp")
 
 
 class TelemetryProtocol(asyncio.DatagramProtocol):

@@ -1,7 +1,7 @@
 # recorded telemetry (bind-mounted into the container)
 data/
 
-# local compose overrides (FC_KEEP_DISCARDED capture toggle)
+# local compose overrides (LS_KEEP_DISCARDED capture toggle)
 .env
 
 # python

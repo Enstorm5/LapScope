@@ -1,4 +1,4 @@
-"""ForzaCalibrator server: UDP telemetry in, web dashboard + API out."""
+"""LapScope server: UDP telemetry in, web dashboard + API out."""
 
 from __future__ import annotations
 
@@ -18,7 +18,7 @@ from .recorder.store import Store
 from .telemetry.hub import Hub
 from .telemetry.listener import TelemetryProtocol
 
-log = logging.getLogger("forzacalibrator")
+log = logging.getLogger("lapscope")
 
 
 async def _watchdog(tracker: SessionTracker) -> None:
@@ -60,7 +60,7 @@ async def lifespan(app: FastAPI):
     store.close()
 
 
-app = FastAPI(title="ForzaCalibrator", lifespan=lifespan)
+app = FastAPI(title="LapScope", lifespan=lifespan)
 app.include_router(router, prefix="/api")
 
 

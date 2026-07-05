@@ -1,1 +1,1 @@
-"""ForzaCalibrator - Forza Horizon 6 telemetry dashboard."""
+"""LapScope - Forza Horizon 6 telemetry dashboard."""

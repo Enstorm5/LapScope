@@ -1,4 +1,4 @@
-# ForzaCalibrator
+# LapScope
 
 A self-hosted telemetry dashboard for **Forza Horizon 6**. Runs in Docker on your PC,
 receives the game's official "Data Out" UDP stream, and serves a web UI with:
@@ -104,7 +104,7 @@ Store (UWP) builds of games can be blocked from sending to `127.0.0.1`. In order
    ```
 
    If a process other than `com.docker.backend` owns `0.0.0.0:9999`, close it (or
-   move ForzaCalibrator to a free port), then `docker compose down && docker compose up -d`.
+   move LapScope to a free port), then `docker compose down && docker compose up -d`.
 
 4. Last resort — add a one-time loopback exemption (admin PowerShell):
 
@@ -132,13 +132,13 @@ Time Attack was found and fixed exactly this way.) Three tools to pin it down:
    ```
 
 2. To keep the session (raw frames included) instead of losing it, restart with
-   `FC_KEEP_DISCARDED=1` and drive the event once:
+   `LS_KEEP_DISCARDED=1` and drive the event once:
 
    ```powershell
-   $env:FC_KEEP_DISCARDED = "1"; docker compose up -d
+   $env:LS_KEEP_DISCARDED = "1"; docker compose up -d
    ```
 
-   (Or put `FC_KEEP_DISCARDED=1` in a `.env` file next to `docker-compose.yml` —
+   (Or put `LS_KEEP_DISCARDED=1` in a `.env` file next to `docker-compose.yml` —
    compose reads it automatically.) The session then shows up on the Analysis page
    (0 laps, but the driven line and an "incomplete" run are there) and the raw data
    is preserved for adding proper support. Unset the variable (or set `0`) and
@@ -162,7 +162,7 @@ the stored frames — recordings are lossless, so nothing has to be redriven.
 |----------------------|-------------|------------------------------------------------|
 | `TELEMETRY_UDP_PORT` | `9999`      | UDP port the listener binds                    |
 | `DATA_DIR`           | `/app/data` | Where `telemetry.db` is written                |
-| `FC_KEEP_DISCARDED`  | `0`         | `1` = keep sessions with no completed laps     |
+| `LS_KEEP_DISCARDED`  | `0`         | `1` = keep sessions with no completed laps     |
 
 Recordings are raw 324-byte packets (~70 MB per hour of driving) in `./data/telemetry.db`;
 delete sessions from the Analysis page to reclaim space.

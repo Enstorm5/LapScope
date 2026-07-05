@@ -14,7 +14,7 @@ import logging
 from ..telemetry.packet import parse
 from .laps import RACE_OFF_GRACE, SessionTracker
 
-log = logging.getLogger("forzacalibrator.recorder")
+log = logging.getLogger("lapscope.recorder")
 
 
 class _ReplayStore:

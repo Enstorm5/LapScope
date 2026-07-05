@@ -15,7 +15,7 @@ from ..recorder.laps import IMPACT_ACCEL
 from ..recorder.reprocess import reprocess_session
 from ..telemetry.packet import parse
 
-log = logging.getLogger("forzacalibrator.api")
+log = logging.getLogger("lapscope.api")
 router = APIRouter()
 
 # FH6 CarClass indices; 6 = R (new class, 901-998 PI), 7 = X (999 only).

@@ -62,7 +62,7 @@ MIGRATIONS = (
     "ALTER TABLE laps ADD COLUMN flags TEXT",  # "rewind,contact" etc.
     "ALTER TABLE sessions ADD COLUMN track_type TEXT",  # road/street/dirt/cross/drag
     # kept=1 exempts a session from the no-completed-laps cleanup
-    # (FC_KEEP_DISCARDED captures, reprocessed sessions)
+    # (LS_KEEP_DISCARDED captures, reprocessed sessions)
     "ALTER TABLE sessions ADD COLUMN kept INTEGER NOT NULL DEFAULT 0",
 )
 

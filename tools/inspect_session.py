@@ -1,7 +1,7 @@
 """Dump the recorder-relevant signals of a stored session, for diagnosing
 event types the segmentation doesn't recognize yet.
 
-Workflow: set FC_KEEP_DISCARDED=1 (see docker-compose.yml / .env), drive the
+Workflow: set LS_KEEP_DISCARDED=1 (see docker-compose.yml / .env), drive the
 unrecognized event once so its raw frames are kept, then inspect it here -
 no game or container needed, the tool reads data/telemetry.db directly.
 
@@ -59,7 +59,7 @@ def inspect(db: sqlite3.Connection, session_id: int) -> None:
                       (session_id,)).fetchall()
     if not rows:
         print(f"session {session_id}: no stored frames"
-              " (only kept/FC_KEEP_DISCARDED sessions retain them after cleanup)")
+              " (only kept/LS_KEEP_DISCARDED sessions retain them after cleanup)")
         return
     laps = db.execute(
         "SELECT lap_number, lap_time, flags FROM laps WHERE session_id = ?"
