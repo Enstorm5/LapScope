@@ -1,6 +1,11 @@
 data/
 tools/
+tests/
+.github/
 *.md
 .git/
+conftest.py
+pyproject.toml
+requirements-dev.txt
 __pycache__/
 *.pyc

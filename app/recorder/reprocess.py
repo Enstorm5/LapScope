@@ -73,7 +73,7 @@ def reprocess_session(store, session_id: int) -> int:
         tracker.on_frame(t, raw, frame)
         last_t = t
     tracker.shutdown(last_t + RACE_OFF_GRACE + 1.0)
-    laps = sum(1 for l in store.session_laps(session_id) if l["lap_time"])
+    laps = sum(1 for lap in store.session_laps(session_id) if lap["lap_time"])
     store.mark_session_kept(session_id)  # survives cleanup even with 0 laps
     log.info("Session %d reprocessed: %d completed laps", session_id, laps)
     return laps

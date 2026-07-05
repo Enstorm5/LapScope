@@ -122,7 +122,7 @@ def inspect(db: sqlite3.Connection, session_id: int) -> None:
     print(f"session {session_id}: {len(rows)} frames over {prev_t - t0:.1f}s")
     print(f"  first: {fmt_frame(t0, t0, parse(rows[0][1]))}")
     print(f"  last:  {fmt_frame(t0, prev_t, prev)}")
-    print(f"stored laps: " + (", ".join(
+    print("stored laps: " + (", ".join(
         f"#{ln + 1}={lt:.3f}s{('[' + fl + ']') if fl else ''}" if lt else f"#{ln + 1}=open"
         for ln, lt, fl in laps) if laps else "none"))
     print(f"{len(events)} signal transitions:")

@@ -23,8 +23,11 @@ feature in the README, and finished TODO items get pruned.
 
 A single-container FastAPI app that receives Forza Horizon 6 "Data Out" UDP
 telemetry, shows a live dashboard, and records sessions/laps into SQLite for lap
-analysis. Vanilla-JS frontend, no build step, no test framework — verification is
-done by running the simulator against the running container.
+analysis. Vanilla-JS frontend, no build step. The recorder's decisions are
+covered by a fast headless `pytest` harness (drives the simulator's scenarios
+straight through `SessionTracker`, no game or container — see
+[tests/](tests/)); running the simulator against the live container is still the
+way to verify the frontend and the real UDP path.
 
 ```
 FH6 ──UDP 9999──▶ listener.py ─▶ packet.py parse ─┬─▶ hub.py ─▶ /ws/live ─▶ dashboard.js
@@ -47,6 +50,12 @@ FH6 ──UDP 9999──▶ listener.py ─▶ packet.py parse ─┬─▶ hub.
 - The Claude Code preview config (`.claude/launch.json`) runs `docker compose up`
   and owns the process — stop the preview server AND `docker compose down` before
   rebuilding, then start the preview again.
+- **Run the tests before opening a PR** — CI runs the same on every PR. From the
+  repo root: `pytest -q` and `ruff check .` (install the tooling once with
+  `pip install -r requirements-dev.txt`). The recorder scenarios in
+  `tests/test_scenarios.py` are the matrix at the bottom of this file, driven
+  headlessly through `SessionTracker` in ~2 s by a fake-socket harness
+  (`tests/harness.py`) — no container, no real-time wait.
 - Verify with the simulator (no game needed), from the repo root:
   `python tools/simulator.py [--wet] [--dirty] [--race N] [--sprint SECS] [--dirt SECS] [--jumps]`.
   It runs in real time (60 Hz), so a 180 s scenario takes 3 minutes — run it in the
@@ -227,6 +236,11 @@ server joining mid-lap, event restart.
   track intentionally stays on screen until the next event starts drawing.
 
 ## Testing scenarios that must keep passing
+
+Each row is both a headless assertion in `tests/test_scenarios.py` (run through
+the fake-socket harness — fast, no container) and a manual simulator command for
+full-stack / visual checks. Keep the two in step: a new detection scenario needs
+a row here, a test, and usually a simulator flag.
 
 | Scenario | Command | Expected |
 |---|---|---|

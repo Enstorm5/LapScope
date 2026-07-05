@@ -1,0 +1,4 @@
+# Tooling for tests + lint (CI and local dev). Runtime deps are in
+# requirements.txt; the test harness needs neither fastapi nor a container.
+pytest>=8
+ruff>=0.6

@@ -103,6 +103,22 @@ listener: `session_id`, `delta` (vs session-best), `session_best`,
   the DB (`--list` to enumerate). The capture-diagnosis workflow is in the
   README ("an event type isn't being recorded").
 
+## Tests (`tests/`, pytest — no container, no game)
+
+| File | Responsibility |
+|---|---|
+| [tests/harness.py](tests/harness.py) | `FakeSocket` parses each packet the simulator "sends" and feeds it straight into a real `SessionTracker` + temp-file `Store`; the simulator's clock is stubbed (`_FastClock`) so a 3-minute scenario runs in milliseconds. `run(scenario, tmp_path, …)` plays a scenario and returns the closed store; `sessions()` / `completed_laps()` / `flags_of()` are assertion helpers. |
+| [tests/test_packet.py](tests/test_packet.py) | Packet invariants: `_STRUCT.size == PACKET_SIZE`, `FIELDS`↔`_STRUCT` value-count lockstep, scalar + wheel-array round trip. |
+| [tests/test_scenarios.py](tests/test_scenarios.py) | The AGENTS.md event-detection matrix as headless assertions (free-roam discard, dirty flags, race finish, sprint/dirt/touge point-to-point, WTA geometric laps, jumps). |
+| [conftest.py](conftest.py), [pyproject.toml](pyproject.toml) | Put the repo root + `tests/` on `sys.path`; `pytest` testpaths and `ruff` lint config (defaults: pyflakes F + E4/E7/E9, line length 100). |
+
+Run `pytest -q` and `ruff check .` from the repo root (tooling in
+[requirements-dev.txt](requirements-dev.txt)); CI ([.github/workflows/ci.yml](.github/workflows/ci.yml))
+runs both plus the `packet.py` self-test on every push and PR. The harness reuses
+the **simulator's** scenario code, so the frames under test are byte-identical to
+the real UDP stream — keep new detection scenarios in `tools/simulator.py` and
+assert them here.
+
 ## Configuration & deployment
 
 - Env vars: `TELEMETRY_UDP_PORT` (9999), `DATA_DIR` (/app/data),

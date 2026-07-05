@@ -181,10 +181,10 @@ def session_laps(session_id: int, request: Request):
     if session is None:
         raise HTTPException(404, "session not found")
     laps = store.session_laps(session_id)
-    best = min((l["lap_time"] for l in laps if l["lap_time"]), default=None)
-    for l in laps:
-        l["is_best"] = bool(l["lap_time"]) and l["lap_time"] == best
-        l["gap_to_best"] = (l["lap_time"] - best) if l["lap_time"] and best else None
+    best = min((lap["lap_time"] for lap in laps if lap["lap_time"]), default=None)
+    for lap in laps:
+        lap["is_best"] = bool(lap["lap_time"]) and lap["lap_time"] == best
+        lap["gap_to_best"] = (lap["lap_time"] - best) if lap["lap_time"] and best else None
     return {"session": _session_out(session), "laps": laps}
 
 

@@ -87,18 +87,18 @@ the build. Playground Games ships new cars → new ordinals, so it goes stale.
 
 ## Testing & CI
 
-- **Automated test harness (there is none today).** Add `pytest`:
-  - packet round-trip / `FIELDS`↔`_STRUCT` invariant (wrap the existing
-    `packet.py` self-test).
-  - Headless recorder assertions: feed simulator-style frames straight through
-    `SessionTracker` into an in-memory `Store` and assert on laps/flags/finishes
-    for every scenario in the AGENTS.md test matrix — **no container, no game,
-    no wall-clock wait** (the current simulator runs in real time, too slow for
-    CI).
-- **GitHub Actions:** run the tests + a lint (ruff) on every PR; build the exe on
-  tags. This is the "automated system for testing" that branch protection will
-  require.
-- **Branch protection** on `main`: require PR + passing checks, no direct pushes.
+- ✅ **Automated test harness** (`tests/`): `pytest` covers the packet
+  round-trip / `FIELDS`↔`_STRUCT` invariant and the full AGENTS.md
+  event-detection matrix, driven headlessly through `SessionTracker` by a
+  fake-socket harness that reuses the simulator's scenarios — no container, no
+  game, no wall-clock wait (~2 s total).
+- ✅ **CI on PRs** (`.github/workflows/ci.yml`): ruff + the `packet.py`
+  self-test + pytest on every push and pull request.
+- **Build the exe on version tags** — the remaining CI job (folds into the
+  Distribution / GitHub Releases items).
+- **Branch protection** on `main` (needs the GitHub remote): require a PR and the
+  passing CI check, no direct pushes. Enable in repo settings once pushed and
+  document the rule in CONTRIBUTING.
 
 ## Docs
 
