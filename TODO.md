@@ -13,16 +13,20 @@ Ideas.**
 
 ## Release blockers (do before announcing publicly)
 
-- **LICENSE.** ✅ Decided **MIT**, `LICENSE` file added. Remaining: add a
-  `## License` line to the README, and credit vendored third-party assets
-  (Rajdhani font — OFL; uPlot — MIT) in a NOTICES/THIRD-PARTY section.
-- **Public README rewrite.** Lead with what it is + a hero GIF, then a features
-  list and a one-line install for the chosen distribution method. Move the deep
-  troubleshooting / capture-diagnosis material to the wiki and link it. Keep the
-  in-game Data Out setup table front and centre.
-- **Screenshots + GIFs** for the README and the Reddit post (live dashboard in
-  motion, analysis A/B comparison, track map colored by speed/slip, dirty-lap
-  flags). Captured from real gameplay — see the asset shot-list.
+- **LICENSE.** ✅ **MIT**, `LICENSE` file added; the README now has a `## License`
+  line and a Third-party assets section crediting Rajdhani (OFL) and uPlot (MIT).
+- **Public README rewrite.** ✅ Rewritten public-facing: hero block (logo + tagline
+  + badges + animated `hero.gif`), condensed features with real screenshots, exe-first
+  install, in-game Data Out table front and centre (with a settings screenshot), brief
+  troubleshooting with the deep material pushed to the Wiki.
+- **Screenshots + GIFs.** ✅ Done — all wired into the README:
+  - `hero.gif` — live dashboard in motion (RACE MODE).
+  - `analysis-compare.png` — real Koenigsegg CCGT @ Hokubu Track, 12-lap A/B compare.
+  - `track-map.png` (2D speed) + `track-map-3d.png` (3D, drag-to-rotate, contact ✦).
+  - `session-list.png` (12-lap list with 💥/⏪ flags) + `session-sidebar.png` (class/PI +
+    drivetrain + track-type + conditions ribbons).
+  - `fh6-settings.png` — the in-game FH6 Data Out settings screen.
+  Analysis/session shots are from real recorded sessions; the hero was captured live.
 - **CI on pull requests** (see Testing & CI) — required before opening the repo
   to outside PRs.
 - **Repo hygiene files:** `CONTRIBUTING.md`, issue templates (bug / feature /
