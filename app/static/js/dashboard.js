@@ -265,11 +265,32 @@ function balanceText(f) {
 }
 
 function updateShiftLights(frac) {
-  // LEDs fill from 55% rpm to redline; all blink on the limiter
-  const box = document.getElementById("shift-lights");
-  box.classList.toggle("limiter", frac > 0.97);
-  shiftLights.forEach((led, i) => {
-    led.classList.toggle("on", frac >= 0.55 + i * 0.042);
+  const leds = document.querySelectorAll("#shift-lights i");
+  if (!leds.length) return;
+  const count = leds.length;
+
+  // High Sensitivity RPM Mapping: 30% RPM to 95% Redline across 100% of the LED status bar
+  const startFrac = 0.30;
+  const endFrac = 0.95;
+  const normFrac = Math.max(0, Math.min(1.0, (frac - startFrac) / (endFrac - startFrac)));
+  const numOn = Math.floor(normFrac * (count + 1));
+  const isFlash = frac >= 0.95;
+
+  leds.forEach((led, i) => {
+    if (isFlash) {
+      led.className = "flash";
+    } else if (i < numOn) {
+      const pct = i / count;
+      if (pct < 0.40) {
+        led.className = "on";
+      } else if (pct < 0.75) {
+        led.className = "warn";
+      } else {
+        led.className = "red";
+      }
+    } else {
+      led.className = "";
+    }
   });
 }
 

@@ -1914,6 +1914,16 @@ body.layout-edit-mode .widget-wrapper {
   background: var(--accent-dim) !important;
 }
 
+.widget-wrapper.dragging {
+  opacity: 0.3 !important;
+  transform: scale(0.96);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+body.layout-edit-mode .widget-wrapper {
+  transition: transform 0.2s ease, opacity 0.15s ease;
+}
+
 .widget-wrapper.drag-over-left {
   border-left: 4px solid var(--accent) !important;
   box-shadow: -6px 0 16px var(--accent-glow) !important;

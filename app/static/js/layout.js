@@ -161,7 +161,7 @@ function initWidgetControls() {
       const bar = document.createElement("div");
       bar.className = "widget-ctrl-bar";
       bar.innerHTML = `
-        <div class="drag-handle" title="Drag to reposition widget" draggable="true">⠿ DRAG</div>
+        <div class="drag-handle" title="Click and drag to reposition widget">⠿ DRAG</div>
         <div class="span-ctrls" title="Change column width">
           <button type="button" class="btn-span" data-span="span2">XS</button>
           <button type="button" class="btn-span" data-span="span3">S</button>
@@ -269,66 +269,128 @@ function initWidgetControls() {
       }
     });
 
-    // Drag & Drop Reordering handlers
+    // ---- Smooth Mouse-Based Drag & Drop Reordering ----
     const dragHandle = w.querySelector(".drag-handle");
     if (dragHandle) {
-      dragHandle.addEventListener("dragstart", (e) => {
+      dragHandle.addEventListener("mousedown", (e) => {
+        if (!isEditMode) return;
+        e.preventDefault();
         draggedWidgetId = id;
         w.classList.add("dragging");
-        e.dataTransfer.effectAllowed = "move";
-        e.dataTransfer.setData("text/plain", id);
-      });
-      dragHandle.addEventListener("dragend", () => {
-        w.classList.remove("dragging");
-        draggedWidgetId = null;
-        document.querySelectorAll(".widget-wrapper").forEach(el => el.classList.remove("drag-over"));
+
+        // Create a ghost clone that follows the mouse
+        const ghost = w.cloneNode(true);
+        ghost.id = "drag-ghost";
+        ghost.style.cssText = `
+          position: fixed; z-index: 9999; pointer-events: none;
+          width: ${w.offsetWidth}px; opacity: 0.7;
+          border: 2px solid var(--accent); border-radius: 8px;
+          box-shadow: 0 0 30px rgba(0, 229, 255, 0.3);
+          transition: none;
+        `;
+        ghost.style.left = `${e.clientX - 60}px`;
+        ghost.style.top = `${e.clientY - 20}px`;
+        document.body.appendChild(ghost);
+
+        // Create the insertion line marker
+        let marker = document.getElementById("drop-marker");
+        if (!marker) {
+          marker = document.createElement("div");
+          marker.id = "drop-marker";
+          document.body.appendChild(marker);
+        }
+        marker.style.display = "none";
+
+        let dropTargetId = null;
+        let dropAfter = false;
+
+        const onMouseMove = (moveEv) => {
+          ghost.style.left = `${moveEv.clientX - 60}px`;
+          ghost.style.top = `${moveEv.clientY - 20}px`;
+
+          // Find the widget under the cursor
+          const allWidgets = Array.from(grid.querySelectorAll(".widget-wrapper"));
+          let closestWidget = null;
+          let closestDist = Infinity;
+          let insertAfter = false;
+
+          for (const target of allWidgets) {
+            if (target.id === id) continue;
+            const rect = target.getBoundingClientRect();
+            const centerY = rect.top + rect.height / 2;
+            const dist = Math.abs(moveEv.clientY - centerY);
+            if (dist < closestDist) {
+              closestDist = dist;
+              closestWidget = target;
+              insertAfter = moveEv.clientY > centerY;
+            }
+          }
+
+          // Clear all previous indicators
+          allWidgets.forEach(t => t.classList.remove("drag-over", "drag-over-top", "drag-over-bottom", "drag-over-left", "drag-over-right"));
+
+          if (closestWidget) {
+            dropTargetId = closestWidget.id;
+            dropAfter = insertAfter;
+            const rect = closestWidget.getBoundingClientRect();
+
+            // Show insertion line marker at edge of target
+            marker.style.display = "block";
+            marker.style.cssText = `
+              position: fixed; z-index: 9998; pointer-events: none;
+              left: ${rect.left}px; width: ${rect.width}px;
+              height: 4px; background: var(--accent, #00e5ff);
+              border-radius: 2px;
+              box-shadow: 0 0 12px rgba(0, 229, 255, 0.6);
+              top: ${insertAfter ? rect.bottom + 3 : rect.top - 7}px;
+              transition: top 0.08s ease, left 0.08s ease;
+            `;
+
+            closestWidget.classList.add("drag-over");
+            closestWidget.classList.add(insertAfter ? "drag-over-bottom" : "drag-over-top");
+          } else {
+            marker.style.display = "none";
+            dropTargetId = null;
+          }
+        };
+
+        const onMouseUp = () => {
+          document.removeEventListener("mousemove", onMouseMove);
+          document.removeEventListener("mouseup", onMouseUp);
+          w.classList.remove("dragging");
+          draggedWidgetId = null;
+
+          // Remove ghost and marker
+          const g = document.getElementById("drag-ghost");
+          if (g) g.remove();
+          const m = document.getElementById("drop-marker");
+          if (m) m.style.display = "none";
+
+          // Clear all indicators
+          document.querySelectorAll(".widget-wrapper").forEach(el =>
+            el.classList.remove("drag-over", "drag-over-top", "drag-over-bottom", "drag-over-left", "drag-over-right")
+          );
+
+          // Perform the reorder
+          if (dropTargetId && dropTargetId !== id) {
+            const idxA = currentLayout.order.indexOf(id);
+            let idxB = currentLayout.order.indexOf(dropTargetId);
+            if (idxA !== -1 && idxB !== -1) {
+              currentLayout.order.splice(idxA, 1);
+              // Recalculate idxB after removal
+              idxB = currentLayout.order.indexOf(dropTargetId);
+              if (dropAfter) idxB += 1;
+              currentLayout.order.splice(idxB, 0, id);
+              saveLayoutState();
+              applyLayout();
+            }
+          }
+        };
+
+        document.addEventListener("mousemove", onMouseMove);
+        document.addEventListener("mouseup", onMouseUp);
       });
     }
-
-    w.addEventListener("dragover", (e) => {
-      if (!isEditMode || !draggedWidgetId || draggedWidgetId === id) return;
-      e.preventDefault();
-      const rect = w.getBoundingClientRect();
-      const relX = e.clientX - rect.left;
-      const relY = e.clientY - rect.top;
-      const isRightHalf = relX > (rect.width / 2);
-      const isBottomHalf = relY > (rect.height / 2);
-
-      w.classList.remove("drag-over-left", "drag-over-right", "drag-over-top", "drag-over-bottom");
-      
-      const dx = Math.abs(relX - rect.width / 2) / (rect.width / 2);
-      const dy = Math.abs(relY - rect.height / 2) / (rect.height / 2);
-
-      if (dx > dy) {
-        w.classList.add(isRightHalf ? "drag-over-right" : "drag-over-left");
-      } else {
-        w.classList.add(isBottomHalf ? "drag-over-bottom" : "drag-over-top");
-      }
-      w.classList.add("drag-over");
-    });
-
-    w.addEventListener("dragleave", () => {
-      w.classList.remove("drag-over", "drag-over-left", "drag-over-right", "drag-over-top", "drag-over-bottom");
-    });
-
-    w.addEventListener("drop", (e) => {
-      if (!isEditMode || !draggedWidgetId || draggedWidgetId === id) return;
-      e.preventDefault();
-      const isAfter = w.classList.contains("drag-over-right") || w.classList.contains("drag-over-bottom");
-      w.classList.remove("drag-over", "drag-over-left", "drag-over-right", "drag-over-top", "drag-over-bottom");
-
-      const idxA = currentLayout.order.indexOf(draggedWidgetId);
-      let idxB = currentLayout.order.indexOf(id);
-      if (idxA !== -1 && idxB !== -1) {
-        currentLayout.order.splice(idxA, 1);
-        if (isAfter && idxA > idxB) {
-          idxB += 1;
-        }
-        currentLayout.order.splice(idxB, 0, draggedWidgetId);
-        saveLayoutState();
-        applyLayout();
-      }
-    });
 
     // Span buttons
     w.querySelectorAll(".btn-span").forEach(btn => {
