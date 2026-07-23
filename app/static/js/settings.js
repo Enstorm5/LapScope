@@ -248,6 +248,25 @@ function openSettings() {
   group("Theme");
   seg("UI Style", "uiMode", [{ label: "Cyber Racing", value: "cyber" }, { label: "Neo-Brutalist", value: "brutalist" }]);
   swatches("Accent", "accent");
+  {
+    const row = document.createElement("div");
+    row.className = "settings-row";
+    const lab = document.createElement("span");
+    lab.className = "settings-label";
+    lab.textContent = "Widget layout";
+    row.appendChild(lab);
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "settings-refresh";
+    btn.textContent = "↺ Reset widgets to default";
+    btn.onclick = () => {
+      if (typeof resetLayout === "function") resetLayout();
+      btn.textContent = "✓ Widgets reset!";
+      setTimeout(() => { btn.textContent = "↺ Reset widgets to default"; }, 2000);
+    };
+    row.appendChild(btn);
+    body.appendChild(row);
+  }
 
   group("Units");
   seg("Speed", "speed", [{ label: "km/h", value: "kmh" }, { label: "mph", value: "mph" }]);

@@ -1415,7 +1415,7 @@ body.theme-brutalist .corner-tag {
 
 /* ---------- Layout Edit Mode & Controls ---------- */
 
-.btn-edit-layout {
+.btn-edit-layout, .btn-reset-layout {
   font-family: var(--display);
   font-size: 0.72rem;
   font-weight: 700;
@@ -1428,7 +1428,7 @@ body.theme-brutalist .corner-tag {
   cursor: pointer;
   transition: all 0.2s ease;
 }
-.btn-edit-layout:hover, .btn-edit-layout.active {
+.btn-edit-layout:hover, .btn-edit-layout.active, .btn-reset-layout:hover {
   color: #000;
   background: var(--accent);
   border-color: var(--accent);
