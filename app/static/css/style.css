@@ -1957,3 +1957,138 @@ body.layout-edit-mode .widget-wrapper {
   transition: transform 0.1s linear;
 }
 
+/* ---------- Full Width Top Standalone Shift Lights Bar ---------- */
+
+.top-shift-bar {
+  width: 100%;
+  height: 14px;
+  background: #060910;
+  border-bottom: 1px solid var(--panel-edge);
+  padding: 2px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 18;
+}
+
+.shift-lights-full {
+  width: 100%;
+  max-width: 1400px;
+  display: flex;
+  gap: 6px;
+  height: 100%;
+}
+
+.shift-lights-full i {
+  flex: 1;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 2px;
+  transition: background 0.08s ease, box-shadow 0.08s ease;
+}
+
+.shift-lights-full i.on {
+  background: #00ff88;
+  box-shadow: 0 0 10px #00ff88;
+}
+
+.shift-lights-full i.warn {
+  background: #ffb703;
+  box-shadow: 0 0 10px #ffb703;
+}
+
+.shift-lights-full i.red {
+  background: #ff3355;
+  box-shadow: 0 0 12px #ff3355;
+}
+
+.shift-lights-full i.flash {
+  background: #00e5ff;
+  box-shadow: 0 0 16px #00e5ff;
+  animation: flash-led 0.1s infinite alternate;
+}
+
+@keyframes flash-led {
+  0% { opacity: 1; background: #ff3355; }
+  100% { opacity: 0.3; background: #00e5ff; }
+}
+
+/* ---------- Velocity Hero Larger Content ---------- */
+
+.speed-hero-lg {
+  font-size: 5.8rem !important;
+  font-weight: 900 !important;
+  line-height: 0.85 !important;
+  letter-spacing: -0.04em !important;
+}
+
+.speed-unit-lg {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--accent);
+  margin-top: 4px;
+}
+
+.speed-block-lg {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* ---------- Animated Suspension Travel Meters ---------- */
+
+.susp-travel-wrap {
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px dashed rgba(255, 255, 255, 0.08);
+}
+
+.susp-meters-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.susp-meter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.susp-lbl {
+  font-family: var(--display);
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: var(--muted);
+}
+
+.susp-track {
+  width: 18px;
+  height: 60px;
+  background: #080c14;
+  border: 1px solid var(--panel-edge);
+  border-radius: 3px;
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+  padding: 1px;
+}
+
+.susp-fill {
+  width: 100%;
+  background: linear-gradient(to top, var(--accent-dim), var(--accent));
+  border-radius: 2px;
+  transition: height 0.08s ease-out;
+  box-shadow: 0 0 8px var(--accent-glow);
+}
+
+.susp-val {
+  font-family: var(--display);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+

@@ -78,6 +78,14 @@
     </div>
   </header>
 
+  <!-- Full Width Standalone Top LED Shift Lights Bar -->
+  <div id="top-shift-bar" class="top-shift-bar" title="RPM Shift Lights">
+    <div id="shift-lights" class="shift-lights-full">
+      <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+      <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+    </div>
+  </div>
+
   <div id="nodata" class="overlay hidden">
     <div class="box">
       <div class="pulse-ring"><i></i></div>
@@ -100,15 +108,14 @@
     <section class="panel cluster span6" id="w-cluster">
       <div class="panel-top-bar">
         <div class="sub-hdr"><span class="bar-accent">▌</span> VELOCITY OUTPUT</div>
-        <div id="shift-lights"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
         <div class="eng-temp-wrap">ENGINE TEMP <b id="eng-temp">94°C</b></div>
       </div>
       <div class="cluster-flex">
         <canvas id="rpm"></canvas>
-        <div class="speed-block">
+        <div class="speed-block speed-block-lg">
           <div class="sub-hdr micro">VELOCITY OUTPUT</div>
-          <div id="speed" class="speed-italic">0</div>
-          <div id="speed-unit">KM/H</div>
+          <div id="speed" class="speed-italic speed-hero-lg">0</div>
+          <div id="speed-unit" class="speed-unit-lg">KM/H</div>
           <div class="vel-histogram brutalist-only" id="vel-bars">
             <span style="height:25%"></span><span style="height:40%"></span>
             <span style="height:20%"></span><span style="height:60%"></span>
@@ -179,6 +186,33 @@
       <h2><span class="bar-accent">▌</span> <span class="hdr-cyber">TYRE TELEMETRY</span><span class="hdr-brutalist">THERMAL MATRIX <span class="tm-dots"><i></i><i></i><i></i></span></span></h2>
       <div class="tyre-container">
         <canvas id="grip"></canvas>
+      </div>
+
+      <!-- Animated Suspension Travel Meters (FL, FR, RL, RR) -->
+      <div class="susp-travel-wrap">
+        <div class="sub-hdr micro"><span class="bar-accent">▌</span> SUSPENSION TRAVEL (METERS)</div>
+        <div class="susp-meters-grid">
+          <div class="susp-meter">
+            <span class="susp-lbl">FL</span>
+            <div class="susp-track"><div id="susp-fl-bar" class="susp-fill" style="height: 35%"></div></div>
+            <b id="susp-fl-val" class="susp-val">0.12m</b>
+          </div>
+          <div class="susp-meter">
+            <span class="susp-lbl">FR</span>
+            <div class="susp-track"><div id="susp-fr-bar" class="susp-fill" style="height: 35%"></div></div>
+            <b id="susp-fr-val" class="susp-val">0.12m</b>
+          </div>
+          <div class="susp-meter">
+            <span class="susp-lbl">RL</span>
+            <div class="susp-track"><div id="susp-rl-bar" class="susp-fill" style="height: 35%"></div></div>
+            <b id="susp-rl-val" class="susp-val">0.14m</b>
+          </div>
+          <div class="susp-meter">
+            <span class="susp-lbl">RR</span>
+            <div class="susp-track"><div id="susp-rr-bar" class="susp-fill" style="height: 35%"></div></div>
+            <b id="susp-rr-val" class="susp-val">0.13m</b>
+          </div>
+        </div>
       </div>
 
       <div class="thermal-matrix-cards brutalist-only">

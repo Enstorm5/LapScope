@@ -450,6 +450,23 @@ function render() {
     setTm("tm-rr-val", "tm-rr-bar", rr);
   }
 
+  // Animated Suspension Travel Meters (Meters)
+  if (f.susp_travel_meters && f.susp_travel_meters.length >= 4) {
+    const [fl, fr, rl, rr] = f.susp_travel_meters;
+    const setSusp = (idVal, idBar, val) => {
+      const elV = $(idVal), elB = $(idBar);
+      if (elV) elV.textContent = `${val.toFixed(2)}m`;
+      if (elB) {
+        const pct = Math.min(100, Math.max(5, (val / 0.35) * 100));
+        elB.style.height = `${pct}%`;
+      }
+    };
+    setSusp("susp-fl-val", "susp-fl-bar", fl);
+    setSusp("susp-fr-val", "susp-fr-bar", fr);
+    setSusp("susp-rl-val", "susp-rl-bar", rl);
+    setSusp("susp-rr-val", "susp-rr-bar", rr);
+  }
+
   const th = f.accel / 2.55, br = f.brake / 2.55, st = f.steer / 1.27;
   const elBarTh = $("bar-th"); if (elBarTh) elBarTh.style.height = th.toFixed(0) + "%";
   const elBarBr = $("bar-br"); if (elBarBr) elBarBr.style.height = br.toFixed(0) + "%";
