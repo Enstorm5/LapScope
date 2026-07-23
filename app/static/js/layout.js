@@ -93,18 +93,27 @@ function applyLayout() {
 
 function setSpan(id, newSpan) {
   currentLayout.spans[id] = newSpan;
+  const baseSpan = parseInt((DEFAULT_LAYOUT.spans[id] || "span4").replace("span", "")) || 4;
+  const curSpanNum = parseInt(newSpan.replace("span", "")) || 4;
+  currentLayout.scales[id] = Math.max(0.5, Math.min(2.0, parseFloat((curSpanNum / baseSpan).toFixed(2))));
   saveLayoutState();
   applyLayout();
 }
 
 function setScale(id, delta, setAbsolute = false) {
-  let cur = currentLayout.scales[id] || 1.0;
+  let curScale = currentLayout.scales[id] || 1.0;
   if (setAbsolute) {
-    cur = Math.max(0.5, Math.min(2.0, parseFloat(delta.toFixed(2))));
+    curScale = Math.max(0.5, Math.min(2.0, parseFloat(delta.toFixed(2))));
   } else {
-    cur = Math.max(0.5, Math.min(2.0, parseFloat((cur + delta).toFixed(2))));
+    curScale = Math.max(0.5, Math.min(2.0, parseFloat((curScale + delta).toFixed(2))));
   }
-  currentLayout.scales[id] = cur;
+  currentLayout.scales[id] = curScale;
+
+  // Also scale the tile grid span container together with content scale
+  const baseSpan = parseInt((DEFAULT_LAYOUT.spans[id] || "span4").replace("span", "")) || 4;
+  const newSpanNum = Math.max(2, Math.min(12, Math.round(baseSpan * curScale)));
+  currentLayout.spans[id] = `span${newSpanNum}`;
+
   saveLayoutState();
   applyLayout();
 }

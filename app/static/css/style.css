@@ -1986,56 +1986,80 @@ body.layout-edit-mode .resize-corner-handle {
 
 .top-shift-bar {
   width: 100%;
-  height: 14px;
-  background: #060910;
+  height: 24px;
+  background: #05080e;
   border-bottom: 1px solid var(--panel-edge);
-  padding: 2px 24px;
+  padding: 3px 20px;
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 18;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.8);
 }
 
 .shift-lights-full {
   width: 100%;
   max-width: 1400px;
   display: flex;
-  gap: 6px;
+  gap: 8px;
   height: 100%;
+  align-items: center;
 }
 
 .shift-lights-full i {
   flex: 1;
-  height: 100%;
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: 2px;
-  transition: background 0.08s ease, box-shadow 0.08s ease;
+  height: 14px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 3px;
+  transition: all 0.06s ease;
 }
 
 .shift-lights-full i.on {
   background: #00ff88;
-  box-shadow: 0 0 10px #00ff88;
+  border-color: #00ff88;
+  box-shadow: 0 0 14px #00ff88, inset 0 1px 3px rgba(255, 255, 255, 0.8);
 }
 
 .shift-lights-full i.warn {
   background: #ffb703;
-  box-shadow: 0 0 10px #ffb703;
+  border-color: #ffb703;
+  box-shadow: 0 0 14px #ffb703, inset 0 1px 3px rgba(255, 255, 255, 0.8);
 }
 
 .shift-lights-full i.red {
   background: #ff3355;
-  box-shadow: 0 0 12px #ff3355;
+  border-color: #ff3355;
+  box-shadow: 0 0 16px #ff3355, inset 0 1px 3px rgba(255, 255, 255, 0.8);
 }
 
 .shift-lights-full i.flash {
   background: #00e5ff;
-  box-shadow: 0 0 16px #00e5ff;
-  animation: flash-led 0.1s infinite alternate;
+  border-color: #00e5ff;
+  box-shadow: 0 0 22px #00e5ff, inset 0 1px 3px rgba(255, 255, 255, 0.9);
+  animation: flash-led 0.08s infinite alternate;
+}
+
+body.theme-brutalist .top-shift-bar {
+  background: #06080c;
+  border-bottom: 2px solid #192230;
+  height: 26px;
+}
+
+body.theme-brutalist .shift-lights-full i {
+  border-radius: 0px;
+  border: 1px solid #1b2638;
+}
+
+body.theme-brutalist .shift-lights-full i.on {
+  background: #00e5ff;
+  border-color: #00e5ff;
+  box-shadow: 0 0 12px rgba(0, 229, 255, 0.8);
 }
 
 @keyframes flash-led {
-  0% { opacity: 1; background: #ff3355; }
-  100% { opacity: 0.3; background: #00e5ff; }
+  0% { opacity: 1; background: #ff3355; border-color: #ff3355; }
+  100% { opacity: 0.35; background: #00e5ff; border-color: #00e5ff; }
 }
 
 /* ---------- Velocity Hero Larger Content ---------- */
