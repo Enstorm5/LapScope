@@ -39,8 +39,13 @@ function loadLayout() {
   try {
     const data = JSON.parse(localStorage.getItem(LAYOUT_KEY));
     if (data && data.order && data.spans) {
+      // Merge any new default widgets that aren't in the saved order
+      const savedOrder = [...data.order];
+      for (const defId of DEFAULT_LAYOUT.order) {
+        if (!savedOrder.includes(defId)) savedOrder.push(defId);
+      }
       return {
-        order: data.order,
+        order: savedOrder,
         spans: { ...DEFAULT_LAYOUT.spans, ...data.spans },
         scales: { ...DEFAULT_LAYOUT.scales, ...(data.scales || {}) },
         heights: { ...(DEFAULT_LAYOUT.heights || {}), ...(data.heights || {}) }
@@ -64,19 +69,27 @@ function applyLayout() {
   const grid = document.querySelector("main.grid");
   if (!grid) return;
 
-  // 1. Re-order widgets in DOM
+  // 1. Build map of all widgets currently in DOM
   const existingMap = new Map();
   const children = Array.from(grid.children);
   for (const child of children) {
     if (child.id) existingMap.set(child.id, child);
   }
 
+  // 2. Add any DOM widgets missing from order array
+  for (const domId of existingMap.keys()) {
+    if (!currentLayout.order.includes(domId)) {
+      currentLayout.order.push(domId);
+    }
+  }
+
+  // 3. Re-order widgets in DOM according to order array
   for (const id of currentLayout.order) {
     const el = existingMap.get(id);
     if (el) grid.appendChild(el);
   }
 
-  // 2. Apply grid spans, freeform height, and zoom scale
+  // 4. Apply grid spans, freeform height, and zoom scale
   for (const [id, el] of existingMap.entries()) {
     const span = currentLayout.spans[id] || "span4";
     el.classList.remove(...Array.from(el.classList).filter(c => /^span\d+$/.test(c)));
