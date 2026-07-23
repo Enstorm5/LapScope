@@ -13,6 +13,7 @@ const SETTINGS_DEFAULTS = {
   power: "kw",          // "kw" | "hp" | "ps"  (packet Power is Watts)
   boost: "psi",         // "psi" | "bar"  (packet Boost is psi)
   accent: "neon",       // key into ACCENTS below
+  uiMode: "cyber",      // "cyber" | "brutalist"
   freeroamMap: false,   // draw the live track map in free roam, not only races
   contactLayer: true,   // show contact sparks + jump glyphs on the analysis map
   defaultMapMode: "2d", // "2d" | "3d"  (absorbs legacy fc_mapmode)
@@ -53,8 +54,8 @@ function saveSettings(patch) {
   _settings = { ..._settings, ...patch };
   try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(_settings)); } catch { /* private mode */ }
   // restyle the page before listeners run, so canvas redraws triggered by
-  // them already see the new --accent
-  if ("accent" in patch) applyAccent();
+  // them already see the new --accent & theme
+  if ("accent" in patch || "uiMode" in patch) applyAccent();
   for (const cb of _settingsListeners) {
     try { cb(_settings); } catch { /* a bad listener must not block the rest */ }
   }
@@ -129,6 +130,12 @@ function applyAccent() {
   document.documentElement.style.setProperty("--accent-glow", `rgba(${r}, ${g}, ${b}, 0.35)`);
   document.documentElement.style.setProperty("--accent-dim", `rgba(${r}, ${g}, ${b}, 0.12)`);
   document.documentElement.style.setProperty("--accent-bg", `rgba(${r}, ${g}, ${b}, 0.2)`);
+
+  if (_settings.uiMode === "brutalist") {
+    document.body.classList.add("theme-brutalist");
+  } else {
+    document.body.classList.remove("theme-brutalist");
+  }
 }
 applyAccent();
 
@@ -239,6 +246,7 @@ function openSettings() {
   };
 
   group("Theme");
+  seg("UI Style", "uiMode", [{ label: "Cyber Racing", value: "cyber" }, { label: "Neo-Brutalist", value: "brutalist" }]);
   swatches("Accent", "accent");
 
   group("Units");

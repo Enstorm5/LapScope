@@ -47,6 +47,7 @@
     </nav>
 
     <div class="header-right">
+      <button id="btn-edit-layout" class="btn-edit-layout" title="Customize dashboard layout">⚙ EDIT LAYOUT</button>
       <div class="sys-status">
         <span class="sys-dot"></span>
         <span class="sys-text">SYSTEM OK</span>
@@ -77,7 +78,7 @@
 
   <main class="grid">
     <!-- Top Left Main Gauge & Speed Panel -->
-    <section class="panel cluster span7">
+    <section class="panel cluster span7" id="w-cluster">
       <div class="panel-top-bar">
         <div class="sub-hdr"><span class="bar-accent">▌</span> RPM SCALE</div>
         <div id="shift-lights"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
@@ -98,7 +99,7 @@
     </section>
 
     <!-- Top Right Session Best & Timing Panel -->
-    <section class="panel span5 session-panel">
+    <section class="panel span5 session-panel" id="w-session">
       <div class="session-hdr-row">
         <div class="session-best-txt">⏱ SESSION BEST: <span id="session-best-val">--:--.---</span></div>
         <div class="live-tag">LIVE SESSION</div>
@@ -137,7 +138,7 @@
     </section>
 
     <!-- Friction Circle Panel -->
-    <section class="panel span4">
+    <section class="panel span4" id="w-friction">
       <h2><span class="bar-accent">▌</span> FRICTION CIRCLE</h2>
       <canvas id="friction"></canvas>
       <div class="g-readout">
@@ -148,7 +149,7 @@
     </section>
 
     <!-- Tyre Telemetry Panel -->
-    <section class="panel span4 tyre-panel">
+    <section class="panel span4 tyre-panel" id="w-tyre">
       <h2><span class="bar-accent">▌</span> TYRE TELEMETRY</h2>
       <div class="tyre-container">
         <canvas id="grip"></canvas>
@@ -161,7 +162,7 @@
     </section>
 
     <!-- Driver Inputs Panel -->
-    <section class="panel span4">
+    <section class="panel span4" id="w-inputs">
       <h2><span class="bar-accent">▌</span> DRIVER INPUTS</h2>
       <div class="inputs-flex">
         <div class="vbar">
@@ -186,13 +187,13 @@
     </section>
 
     <!-- Input Trace Panel -->
-    <section class="panel span7">
+    <section class="panel span7" id="w-strip">
       <h2><span class="bar-accent">▌</span> INPUT TRACE (LAST 10s) — <span class="lg-th">throttle</span> · <span class="lg-br">brake</span> · <span class="lg-st">steering</span></h2>
       <canvas id="strip"></canvas>
     </section>
 
     <!-- Circuit Map Panel -->
-    <section class="panel span5">
+    <section class="panel span5" id="w-circuit">
       <h2><span class="bar-accent">▌</span> CIRCUIT MAP <span id="map-track-name"></span></h2>
       <div class="circuit-map-container">
         <canvas id="livemap"></canvas>
@@ -203,7 +204,7 @@
       </div>
     </section>
 
-    <section class="panel span12" id="raw-panel" style="display:none">
+    <section class="panel span12" id="w-raw" style="display:none">
       <h2><span class="bar-accent">▌</span> RAW TELEMETRY — packet values, game-native units
         <button id="raw-hold" title="Freeze the displayed values to read them — telemetry keeps recording">⏸ Hold</button>
       </h2>
@@ -215,6 +216,7 @@
 <script src="js/common.js"></script>
 <script src="js/settings.js"></script>
 <script src="js/gauges.js"></script>
+<script src="js/layout.js"></script>
 <script src="js/dashboard.js"></script>
 <script>
   // Wire sidebar settings icon
