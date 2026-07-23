@@ -455,25 +455,6 @@ main.grid .lap-grid { margin-bottom: auto; }
 
 .cluster { position: relative; padding-top: 10px; }
 
-#shift-lights {
-  display: flex;
-  justify-content: center;
-  gap: 9px;
-  margin: 0 0 12px;
-}
-#shift-lights i {
-  width: 13px; height: 13px;
-  border-radius: 50%;
-  background: #161e2a;
-  border: 1px solid #202a38;
-  transition: background 60ms linear;
-}
-#shift-lights i.on:nth-child(-n+4) { background: var(--good); box-shadow: 0 0 9px var(--good); border-color: transparent; }
-#shift-lights i.on:nth-child(n+5):nth-child(-n+7) { background: var(--warn); box-shadow: 0 0 9px var(--warn); border-color: transparent; }
-#shift-lights i.on:nth-child(n+8) { background: var(--bad); box-shadow: 0 0 9px var(--bad); border-color: transparent; }
-#shift-lights.limiter i { animation: blink 0.14s steps(1) infinite; }
-@keyframes blink { 50% { filter: brightness(0.25); } }
-
 .cluster-flex {
   display: flex;
   align-items: center;
@@ -2037,7 +2018,7 @@ body.layout-edit-mode .resize-corner-handle {
   align-items: center;
 }
 
-.shift-lights-full i {
+.shift-lights-full i, #shift-lights i {
   flex: 1;
   height: 16px;
   background: rgba(255, 255, 255, 0.04);
@@ -2046,33 +2027,33 @@ body.layout-edit-mode .resize-corner-handle {
   transition: all 0.06s ease;
 }
 
-.shift-lights-full i.on {
-  background: #00ff88;
-  border-color: #00ff88;
+.shift-lights-full i.on, #shift-lights i.on {
+  background: #00ff88 !important;
+  border-color: #00ff88 !important;
   border-radius: 0px !important;
-  box-shadow: 0 0 14px #00ff88, inset 0 0 4px #ffffff;
+  box-shadow: 0 0 14px #00ff88, inset 0 0 4px #ffffff !important;
 }
 
-.shift-lights-full i.warn {
-  background: #ffb703;
-  border-color: #ffb703;
+.shift-lights-full i.warn, #shift-lights i.warn {
+  background: #ffb703 !important;
+  border-color: #ffb703 !important;
   border-radius: 0px !important;
-  box-shadow: 0 0 14px #ffb703, inset 0 0 4px #ffffff;
+  box-shadow: 0 0 14px #ffb703, inset 0 0 4px #ffffff !important;
 }
 
-.shift-lights-full i.red {
-  background: #ff3355;
-  border-color: #ff3355;
+.shift-lights-full i.red, #shift-lights i.red {
+  background: #ff3355 !important;
+  border-color: #ff3355 !important;
   border-radius: 0px !important;
-  box-shadow: 0 0 16px #ff3355, inset 0 0 4px #ffffff;
+  box-shadow: 0 0 16px #ff3355, inset 0 0 4px #ffffff !important;
 }
 
-.shift-lights-full i.flash {
-  background: #00e5ff;
-  border-color: #00e5ff;
+.shift-lights-full i.flash, #shift-lights i.flash {
+  background: #00e5ff !important;
+  border-color: #00e5ff !important;
   border-radius: 0px !important;
-  box-shadow: 0 0 22px #00e5ff, inset 0 0 6px #ffffff;
-  animation: flash-led 0.08s infinite alternate;
+  box-shadow: 0 0 22px #00e5ff, inset 0 0 6px #ffffff !important;
+  animation: flash-led 0.08s infinite alternate !important;
 }
 
 body.theme-brutalist .top-shift-bar {
@@ -2081,8 +2062,8 @@ body.theme-brutalist .top-shift-bar {
   height: 26px;
 }
 
-body.theme-brutalist .shift-lights-full i {
-  border-radius: 0px;
+body.theme-brutalist .shift-lights-full i, body.theme-brutalist #shift-lights i {
+  border-radius: 0px !important;
   border: 1px solid #1b2638;
 }
 
