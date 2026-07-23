@@ -12,7 +12,7 @@ const SETTINGS_DEFAULTS = {
   dist: "km",           // "km" | "mi"
   power: "kw",          // "kw" | "hp" | "ps"  (packet Power is Watts)
   boost: "psi",         // "psi" | "bar"  (packet Boost is psi)
-  accent: "cyan",       // key into ACCENTS below
+  accent: "neon",       // key into ACCENTS below
   freeroamMap: false,   // draw the live track map in free roam, not only races
   contactLayer: true,   // show contact sparks + jump glyphs on the analysis map
   defaultMapMode: "2d", // "2d" | "3d"  (absorbs legacy fc_mapmode)
@@ -101,26 +101,18 @@ function fmtBoost(psi) { return boostFromPsi(psi).toFixed(_settings.boost === "b
 /* tire-temp cell string for the grip gauge, e.g. "71°C" (input is Fahrenheit) */
 function fmtTireTemp(f) { return `${Math.round(tempFromF(f))}${tempUnit()}`; }
 
-/* ---------- accent theme (issue #25) ----------
-   Curated presets, not a free color wheel, so contrast against the dark
-   palette stays readable everywhere. Each entry:
-   - accent: what CSS --accent becomes (all light enough for the #001018
-     text that sits on accent-filled pills/buttons);
-   - pick: the chart-friendly shade used as overlay color A on the analysis
-     page (identical between map and charts);
-   - clash: index in the analysis BASE_PICK_COLORS palette that sits too
-     close to this accent — analysis.js swaps that one for cyan so six
-     overlaid laps stay tellable-apart. */
+/* ---------- accent theme (issue #25) ---------- */
 const ACCENTS = {
-  cyan:    { label: "Cyan",    accent: "#00d4ff", pick: "#22d3ee", clash: -1 },
-  magenta: { label: "Magenta", accent: "#ff3d7f", pick: "#ff3d7f", clash: 4 },
-  violet:  { label: "Violet",  accent: "#9d6bff", pick: "#9d6bff", clash: 2 },
-  sunset:  { label: "Sunset",  accent: "#ff8c2e", pick: "#ff8c2e", clash: 1 },
-  lime:    { label: "Lime",    accent: "#a3e635", pick: "#a3e635", clash: 3 },
-  frost:   { label: "Frost",   accent: "#e8f1fb", pick: "#e8f1fb", clash: 5 },
+  neon:    { label: "Neon Green", accent: "#00ff88", pick: "#00ff88", clash: 3 },
+  cyan:    { label: "Cyan",       accent: "#00d4ff", pick: "#22d3ee", clash: -1 },
+  magenta: { label: "Magenta",    accent: "#ff3d7f", pick: "#ff3d7f", clash: 4 },
+  violet:  { label: "Violet",     accent: "#9d6bff", pick: "#9d6bff", clash: 2 },
+  sunset:  { label: "Sunset",     accent: "#ff8c2e", pick: "#ff8c2e", clash: 1 },
+  lime:    { label: "Lime",       accent: "#a3e635", pick: "#a3e635", clash: 3 },
+  frost:   { label: "Frost",      accent: "#e8f1fb", pick: "#e8f1fb", clash: 5 },
 };
 
-function accentDef() { return ACCENTS[_settings.accent] || ACCENTS.cyan; }
+function accentDef() { return ACCENTS[_settings.accent] || ACCENTS.neon; }
 
 /* "#rrggbb" -> "rgba(r, g, b, a)": canvas strokes need alpha'd accents */
 function hexRgba(hex, a) {
@@ -128,11 +120,15 @@ function hexRgba(hex, a) {
   return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${a})`;
 }
 
-/* The whole CSS theme keys off --accent (style.css derives glows and fills
-   from it via color-mix); canvas renderers can't use var() and instead pull
-   accentDef() again on every settings change (gauges.js / analysis.js). */
 function applyAccent() {
-  document.documentElement.style.setProperty("--accent", accentDef().accent);
+  const acc = accentDef().accent;
+  document.documentElement.style.setProperty("--accent", acc);
+  const n = parseInt(acc.slice(1), 16);
+  const r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+  document.documentElement.style.setProperty("--accent-rgb", `${r}, ${g}, ${b}`);
+  document.documentElement.style.setProperty("--accent-glow", `rgba(${r}, ${g}, ${b}, 0.35)`);
+  document.documentElement.style.setProperty("--accent-dim", `rgba(${r}, ${g}, ${b}, 0.12)`);
+  document.documentElement.style.setProperty("--accent-bg", `rgba(${r}, ${g}, ${b}, 0.2)`);
 }
 applyAccent();
 

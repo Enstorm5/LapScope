@@ -377,49 +377,58 @@ function render() {
   updateShiftLights(f.engine_max_rpm > 0 ? f.current_engine_rpm / f.engine_max_rpm : 0);
 
   const v = speedFromMps(f.speed);
-  $("speed").textContent = Math.round(Math.max(0, v));
-  $("speed-unit").textContent = speedUnit();
-  $("power").textContent = powerFromW(Math.max(0, f.power)).toFixed(0);
-  $("power-unit").textContent = powerUnit();
-  $("boost").textContent = fmtBoost(Math.max(0, f.boost));
-  $("boost-unit").textContent = boostUnit();
+  const elSpeed = $("speed"); if (elSpeed) elSpeed.textContent = Math.round(Math.max(0, v));
+  const elSpeedUnit = $("speed-unit"); if (elSpeedUnit) elSpeedUnit.textContent = speedUnit();
+  const elPower = $("power"); if (elPower) elPower.textContent = powerFromW(Math.max(0, f.power)).toFixed(0);
+  const elPowerUnit = $("power-unit"); if (elPowerUnit) elPowerUnit.textContent = powerUnit();
+  const elBoost = $("boost"); if (elBoost) elBoost.textContent = fmtBoost(Math.max(0, f.boost));
+  const elBoostUnit = $("boost-unit"); if (elBoostUnit) elBoostUnit.textContent = boostUnit();
 
   const latG = f.accel_x / 9.80665, lonG = f.accel_z / 9.80665;
-  $("latg").textContent = latG.toFixed(2);
-  $("long").textContent = lonG.toFixed(2);
-  $("totg").textContent = Math.hypot(latG, lonG).toFixed(2);
+  const elLat = $("latg"); if (elLat) elLat.textContent = latG.toFixed(2);
+  const elLong = $("long"); if (elLong) elLong.textContent = lonG.toFixed(2);
+  const elTot = $("totg"); if (elTot) elTot.textContent = Math.hypot(latG, lonG).toFixed(2);
 
   const [txt, cls] = balanceText(f);
   const bal = $("balance");
-  bal.textContent = txt;
-  bal.className = `balance ${cls}`;
+  if (bal) {
+    bal.textContent = txt;
+    bal.className = `balance ${cls}`;
+  }
 
   const th = f.accel / 2.55, br = f.brake / 2.55, st = f.steer / 1.27;
-  $("bar-th").style.height = th.toFixed(0) + "%";
-  $("bar-br").style.height = br.toFixed(0) + "%";
-  $("thr-val").textContent = th.toFixed(0);
-  $("brk-val").textContent = br.toFixed(0);
-  $("steer-ind").style.left = `calc(${(50 + st * 0.44).toFixed(1)}% - 9px)`;
-  $("gear-mini").textContent = f.gear === 0 ? "R" : f.gear === 11 ? "N" : f.gear;
+  const elBarTh = $("bar-th"); if (elBarTh) elBarTh.style.height = th.toFixed(0) + "%";
+  const elBarBr = $("bar-br"); if (elBarBr) elBarBr.style.height = br.toFixed(0) + "%";
+  const elThrVal = $("thr-val"); if (elThrVal) elThrVal.textContent = th.toFixed(0) + "%";
+  const elBrkVal = $("brk-val"); if (elBrkVal) elBrkVal.textContent = br.toFixed(0) + "%";
+  
+  const elSteerInd = $("steer-ind"); if (elSteerInd) elSteerInd.style.left = `calc(${(50 + st * 0.44).toFixed(1)}% - 8px)`;
+  const elSteerDeg = $("steer-deg"); if (elSteerDeg) elSteerDeg.textContent = `${Math.round(st * 0.45)}°`;
+  const elGearMini = $("gear-mini"); if (elGearMini) elGearMini.textContent = f.gear === 0 ? "R" : f.gear === 11 ? "N" : f.gear;
 
-  // lap timing only means something during an event; in free roam the
-  // fallback lap clock would just count up meaninglessly
   const race = !!f.race_mode;
   const flag = $("race-flag");
-  flag.textContent = race ? "RACE MODE" : "FREE ROAM";
-  flag.classList.toggle("on", race);
-  $("lap-cur").textContent = race ? fmtLap(f.current_lap || f.lap_elapsed) : "–:--.---";
-  $("lap-last").textContent = fmtLap(f.last_lap);
-  $("lap-best").textContent = fmtLap(f.session_best ?? f.best_lap);
-  $("lap-no").textContent = race ? `${f.lap_number + 1} / ${f.race_position || "–"}` : "– / –";
+  if (flag) {
+    flag.textContent = race ? "RACE MODE" : "FREE ROAM";
+    flag.classList.toggle("on", race);
+  }
+  
+  const curTimeStr = race ? fmtLap(f.current_lap || f.lap_elapsed) : "0:00.000";
+  const elLapCur = $("lap-cur"); if (elLapCur) elLapCur.textContent = curTimeStr;
+  const elLapLast = $("lap-last"); if (elLapLast) elLapLast.textContent = fmtLap(f.last_lap);
+  const elLapBest = $("lap-best"); if (elLapBest) elLapBest.textContent = fmtLap(f.session_best ?? f.best_lap);
+  const elSessBestVal = $("session-best-val"); if (elSessBestVal) elSessBestVal.textContent = fmtLap(f.session_best ?? f.best_lap);
+  const elLapNo = $("lap-no"); if (elLapNo) elLapNo.textContent = race ? `${f.lap_number + 1} / ${f.race_position || "–"}` : "– / –";
 
   const d = $("delta");
-  if (f.delta == null) {
-    d.textContent = "—";
-    d.className = "";
-  } else {
-    d.textContent = (f.delta >= 0 ? "+" : "−") + Math.abs(f.delta).toFixed(3);
-    d.className = f.delta >= 0 ? "pos" : "neg";
+  if (d) {
+    if (f.delta == null) {
+      d.textContent = "-0.000";
+      d.className = "delta-val";
+    } else {
+      d.textContent = (f.delta >= 0 ? "+" : "−") + Math.abs(f.delta).toFixed(3);
+      d.className = "delta-val " + (f.delta >= 0 ? "pos" : "neg");
+    }
   }
 
   if (getSettings().rawLive && !rawPanel.held) updateRawPanel(f);

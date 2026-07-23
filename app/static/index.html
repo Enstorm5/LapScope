@@ -3,123 +3,223 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>LapScope — Live</title>
+<title>Telemetry — Live</title>
 <link rel="icon" type="image/png" href="img/logo.png">
 <link rel="stylesheet" href="css/fonts.css">
 <link rel="stylesheet" href="css/style.css">
 </head>
-<body>
-<header>
-  <div class="brand"><i></i>LAP<span>SCOPE</span></div>
-  <nav>
-    <a class="active" href="index.html">Live</a>
-    <a href="analysis.html">Analysis</a>
-  </nav>
-  <div id="car-chip" class="chip" style="display:none"></div>
-  <div id="conn" class="chip"><i class="dot"></i><span>connecting…</span></div>
-  <div id="settings-btn" class="chip clickable" title="Settings" aria-label="Settings">⚙ Settings</div>
-</header>
+<body class="app-body">
 
-<div id="nodata" class="overlay hidden">
-  <div class="box">
-    <div class="pulse-ring"><i></i></div>
-    <h3>Waiting for telemetry</h3>
-    <p>In Forza Horizon 6 open <b>Settings → HUD and Gameplay</b> and set:</p>
-    <p class="setup-lines">
-      Data Out <code>ON</code><br>
-      Data Out IP Address <code>127.0.0.1</code><br>
-      Data Out IP Port <code id="nd-port">9999</code>
-    </p>
-    <p>Then drive — telemetry is not sent while in menus.
-       If nothing arrives, try your PC's LAN IP instead of 127.0.0.1
-       (see the README's loopback troubleshooting).</p>
-    <div class="stat" id="nd-stat">server: waiting for first packet…</div>
+<aside class="app-sidebar">
+  <div class="sidebar-top">
+    <div class="sidebar-icon brand-icon" title="Telemetry System">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+    </div>
+    <a href="index.html" class="sidebar-icon active" title="Live Dashboard">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+    </a>
+    <a href="analysis.html" class="sidebar-icon" title="Session Analysis">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+    </a>
+    <a href="#livemap" class="sidebar-icon" title="Circuit Map">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+    </a>
+    <a href="#raw-panel" class="sidebar-icon" title="Raw Telemetry">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/></svg>
+    </a>
   </div>
-</div>
+  <div class="sidebar-bottom">
+    <div class="sidebar-status-dot"></div>
+    <div id="sidebar-settings-btn" class="sidebar-icon clickable" title="Settings" aria-label="Settings">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    </div>
+  </div>
+</aside>
 
-<main class="grid">
-  <section class="panel cluster span7">
-    <div id="shift-lights"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
-    <div class="cluster-flex">
-      <canvas id="rpm"></canvas>
-      <div class="speed-block">
-        <div id="speed">0</div>
-        <div id="speed-unit">km/h</div>
-        <div class="mini-row">
-          <span><b id="power">0</b><em id="power-unit">kW</em></span>
-          <span><b id="boost">0.0</b><em id="boost-unit">psi</em></span>
+<div class="app-main">
+  <header>
+    <nav class="top-nav">
+      <a class="active" href="index.html">LIVE DATA</a>
+      <a href="analysis.html">SESSION</a>
+      <a href="analysis.html">HISTORY</a>
+      <a href="#car-chip">VEHICLE</a>
+      <a href="javascript:void(0)" onclick="openSettings()">SETUP</a>
+    </nav>
+
+    <div class="header-right">
+      <div class="sys-status">
+        <span class="sys-dot"></span>
+        <span class="sys-text">SYSTEM OK</span>
+        <span class="sys-sub">V-SYNC ACTIVE</span>
+      </div>
+      <div id="car-chip" class="chip" style="display:none"></div>
+      <div id="conn" class="chip"><i class="dot"></i><span>connecting…</span></div>
+      <div id="settings-btn" class="chip clickable" title="Settings" aria-label="Settings">⚙ SETTINGS</div>
+    </div>
+  </header>
+
+  <div id="nodata" class="overlay hidden">
+    <div class="box">
+      <div class="pulse-ring"><i></i></div>
+      <h3>Waiting for telemetry</h3>
+      <p>In Forza Horizon 6 open <b>Settings → HUD and Gameplay</b> and set:</p>
+      <p class="setup-lines">
+        Data Out <code>ON</code><br>
+        Data Out IP Address <code>127.0.0.1</code><br>
+        Data Out IP Port <code id="nd-port">9999</code>
+      </p>
+      <p>Then drive — telemetry is not sent while in menus.
+         If nothing arrives, try your PC's LAN IP instead of 127.0.0.1
+         (see the README's loopback troubleshooting).</p>
+      <div class="stat" id="nd-stat">server: waiting for first packet…</div>
+    </div>
+  </div>
+
+  <main class="grid">
+    <!-- Top Left Main Gauge & Speed Panel -->
+    <section class="panel cluster span7">
+      <div class="panel-top-bar">
+        <div class="sub-hdr"><span class="bar-accent">▌</span> RPM SCALE</div>
+        <div id="shift-lights"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        <div class="eng-temp-wrap">ENGINE TEMP <b id="eng-temp">94°C</b></div>
+      </div>
+      <div class="cluster-flex">
+        <canvas id="rpm"></canvas>
+        <div class="speed-block">
+          <div class="sub-hdr micro">VELOCITY</div>
+          <div id="speed">0</div>
+          <div id="speed-unit">KM/H</div>
+          <div class="mini-row">
+            <span>BOOST <b id="boost">0.0</b> <em id="boost-unit">BAR</em></span>
+            <span>POWER <b id="power">0</b> <em id="power-unit">KW</em></span>
+          </div>
         </div>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <section class="panel span5">
-    <h2>Lap · delta to session best <span id="race-flag" class="race-flag">—</span></h2>
-    <div id="delta">—</div>
-    <div class="lap-grid">
-      <div><div class="label">Current</div><div class="value" id="lap-cur">–:--.---</div></div>
-      <div><div class="label">Last</div><div class="value" id="lap-last">–:--.---</div></div>
-      <div><div class="label">Session best</div><div class="value" id="lap-best">–:--.---</div></div>
-      <div><div class="label">Lap / Pos</div><div class="value" id="lap-no">– / –</div></div>
-    </div>
-  </section>
-
-  <section class="panel span4">
-    <h2>Friction circle</h2>
-    <canvas id="friction"></canvas>
-    <div class="g-readout">
-      <span>Lat <b id="latg">0.00</b> g</span>
-      <span>Lon <b id="long">0.00</b> g</span>
-      <span>Total <b id="totg">0.00</b> g</span>
-    </div>
-  </section>
-
-  <section class="panel span4">
-    <h2>Tire grip · slip / temp / spring</h2>
-    <canvas id="grip"></canvas>
-    <div id="balance" class="balance">—</div>
-  </section>
-
-  <section class="panel span4">
-    <h2>Inputs</h2>
-    <div class="inputs-flex">
-      <div class="vbar">
-        <div class="vbar-track"><div id="bar-th" class="vbar-fill th"></div></div>
-        <b id="thr-val">0</b><span>THR</span>
+    <!-- Top Right Session Best & Timing Panel -->
+    <section class="panel span5 session-panel">
+      <div class="session-hdr-row">
+        <div class="session-best-txt">⏱ SESSION BEST: <span id="session-best-val">--:--.---</span></div>
+        <div class="live-tag">LIVE SESSION</div>
       </div>
-      <div class="vbar">
-        <div class="vbar-track"><div id="bar-br" class="vbar-fill br"></div></div>
-        <b id="brk-val">0</b><span>BRK</span>
+
+      <div class="lap-main-display">
+        <div class="lap-lbl">CURRENT LAP</div>
+        <div id="lap-cur">0:00.000</div>
       </div>
-      <div class="steer-col">
+
+      <div class="delta-box">
+        <span class="delta-lbl">DELTA</span>
+        <span id="delta" class="delta-val">-0.000</span>
+      </div>
+
+      <div class="sectors-grid">
+        <div class="sector-card">
+          <div class="s-label">SECTOR 1</div>
+          <div class="s-val" id="sec-1">--.---</div>
+        </div>
+        <div class="sector-card">
+          <div class="s-label">SECTOR 2</div>
+          <div class="s-val" id="sec-2">--.---</div>
+        </div>
+        <div class="sector-card">
+          <div class="s-label">SECTOR 3</div>
+          <div class="s-val" id="sec-3">--.---</div>
+        </div>
+      </div>
+
+      <div class="lap-grid">
+        <div><div class="label">Last</div><div class="value" id="lap-last">–:--.---</div></div>
+        <div><div class="label">Session best</div><div class="value" id="lap-best">–:--.---</div></div>
+        <div><div class="label">Lap / Pos</div><div class="value" id="lap-no">– / –</div></div>
+      </div>
+    </section>
+
+    <!-- Friction Circle Panel -->
+    <section class="panel span4">
+      <h2><span class="bar-accent">▌</span> FRICTION CIRCLE</h2>
+      <canvas id="friction"></canvas>
+      <div class="g-readout">
+        <span>LATERAL <b id="latg">0.00</b> G</span>
+        <span>LONGITUDINAL <b id="long">0.00</b> G</span>
+        <span>TOTAL <b id="totg">0.00</b> G</span>
+      </div>
+    </section>
+
+    <!-- Tyre Telemetry Panel -->
+    <section class="panel span4 tyre-panel">
+      <h2><span class="bar-accent">▌</span> TYRE TELEMETRY</h2>
+      <div class="tyre-container">
+        <canvas id="grip"></canvas>
+      </div>
+      <div id="balance" class="balance">—</div>
+      <div class="tyre-sub-readout">
+        <span>WEAR: <b id="tyre-wear">85%</b></span>
+        <span>PRESS: <b id="tyre-press">2.1 BAR</b></span>
+      </div>
+    </section>
+
+    <!-- Driver Inputs Panel -->
+    <section class="panel span4">
+      <h2><span class="bar-accent">▌</span> DRIVER INPUTS</h2>
+      <div class="inputs-flex">
+        <div class="vbar">
+          <span class="vbar-hdr">THROTTLE</span>
+          <div class="vbar-track"><div id="bar-th" class="vbar-fill th"></div></div>
+          <b id="thr-val">0%</b>
+        </div>
+        <div class="vbar">
+          <span class="vbar-hdr">BRAKE</span>
+          <div class="vbar-track"><div id="bar-br" class="vbar-fill br"></div></div>
+          <b id="brk-val">0%</b>
+        </div>
+      </div>
+      <div class="steer-row">
+        <div class="steer-hdr-flex">
+          <span>STEERING ANGLE</span>
+          <b id="steer-deg">0°</b>
+        </div>
         <div class="steer-track"><i class="notch"></i><div id="steer-ind"></div></div>
-        <span>STEERING</span>
         <div class="gear-mini">Gear <b id="gear-mini">–</b></div>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <section class="panel span5">
-    <h2>Track map — drawn live during a race</h2>
-    <canvas id="livemap"></canvas>
-  </section>
+    <!-- Input Trace Panel -->
+    <section class="panel span7">
+      <h2><span class="bar-accent">▌</span> INPUT TRACE (LAST 10s) — <span class="lg-th">throttle</span> · <span class="lg-br">brake</span> · <span class="lg-st">steering</span></h2>
+      <canvas id="strip"></canvas>
+    </section>
 
-  <section class="panel span7">
-    <h2>Input trace — <span class="lg-th">throttle</span> · <span class="lg-br">brake</span> · <span class="lg-st">steering</span></h2>
-    <canvas id="strip"></canvas>
-  </section>
+    <!-- Circuit Map Panel -->
+    <section class="panel span5">
+      <h2><span class="bar-accent">▌</span> CIRCUIT MAP <span id="map-track-name"></span></h2>
+      <div class="circuit-map-container">
+        <canvas id="livemap"></canvas>
+        <div class="corner-tag" id="corner-tag">
+          <span class="c-lbl">NEXT CORNER</span>
+          <span class="c-val" id="next-corner-val">--</span>
+        </div>
+      </div>
+    </section>
 
-  <section class="panel span12" id="raw-panel" style="display:none">
-    <h2>Raw telemetry — packet values, game-native units
-      <button id="raw-hold" title="Freeze the displayed values to read them — telemetry keeps recording">⏸ Hold</button>
-    </h2>
-    <div id="raw-body"></div>
-  </section>
-</main>
+    <section class="panel span12" id="raw-panel" style="display:none">
+      <h2><span class="bar-accent">▌</span> RAW TELEMETRY — packet values, game-native units
+        <button id="raw-hold" title="Freeze the displayed values to read them — telemetry keeps recording">⏸ Hold</button>
+      </h2>
+      <div id="raw-body"></div>
+    </section>
+  </main>
+</div>
 
 <script src="js/common.js"></script>
 <script src="js/settings.js"></script>
 <script src="js/gauges.js"></script>
 <script src="js/dashboard.js"></script>
+<script>
+  // Wire sidebar settings icon
+  document.getElementById("sidebar-settings-btn")?.addEventListener("click", openSettings);
+</script>
 </body>
 </html>
+

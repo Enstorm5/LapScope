@@ -3,35 +3,70 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>LapScope — Analysis</title>
+<title>Telemetry — Analysis</title>
 <link rel="icon" type="image/png" href="img/logo.png">
 <link rel="stylesheet" href="css/uplot.min.css">
 <link rel="stylesheet" href="css/fonts.css">
 <link rel="stylesheet" href="css/style.css">
 </head>
-<body>
-<header>
-  <div class="brand"><i></i>LAP<span>SCOPE</span></div>
-  <nav>
-    <a href="index.html">Live</a>
-    <a class="active" href="analysis.html">Analysis</a>
-  </nav>
-  <div class="chip" id="hint">pick a session, then tag laps to compare — up to 6, across sessions</div>
-  <div id="settings-btn" class="chip clickable" title="Settings" aria-label="Settings">⚙ Settings</div>
-</header>
+<body class="app-body">
 
-<div class="analysis-layout">
-  <aside class="sidebar">
-    <div class="sidebar-actions">
-      <button id="btn-import" title="Import a LapScope CSV export — rebuilds the session (laps, charts, map) from the file">Import CSV</button>
-      <input type="file" id="import-file" accept=".csv,text/csv" hidden>
+<aside class="app-sidebar">
+  <div class="sidebar-top">
+    <div class="sidebar-icon brand-icon" title="Telemetry System">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
     </div>
-    <div id="session-list"><div class="empty-hint">loading…</div></div>
-  </aside>
+    <a href="index.html" class="sidebar-icon" title="Live Dashboard">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+    </a>
+    <a href="analysis.html" class="sidebar-icon active" title="Session Analysis">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+    </a>
+    <a href="index.html#livemap" class="sidebar-icon" title="Circuit Map">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+    </a>
+  </div>
+  <div class="sidebar-bottom">
+    <div class="sidebar-status-dot"></div>
+    <div id="sidebar-settings-btn" class="sidebar-icon clickable" title="Settings" aria-label="Settings">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    </div>
+  </div>
+</aside>
 
-  <div class="detail" id="detail">
-    <div class="empty-hint">No session selected. Drive with Data Out enabled (or run the
-      simulator) and sessions will appear on the left.</div>
+<div class="app-main">
+  <header>
+    <nav class="top-nav">
+      <a href="index.html">LIVE DATA</a>
+      <a class="active" href="analysis.html">SESSION</a>
+      <a class="active" href="analysis.html">HISTORY</a>
+      <a href="javascript:void(0)" onclick="openSettings()">SETUP</a>
+    </nav>
+
+    <div class="header-right">
+      <div class="sys-status">
+        <span class="sys-dot"></span>
+        <span class="sys-text">SYSTEM OK</span>
+        <span class="sys-sub">V-SYNC ACTIVE</span>
+      </div>
+      <div class="chip" id="hint">pick a session, then tag laps to compare</div>
+      <div id="settings-btn" class="chip clickable" title="Settings" aria-label="Settings">⚙ SETTINGS</div>
+    </div>
+  </header>
+
+  <div class="analysis-layout">
+    <aside class="sidebar">
+      <div class="sidebar-actions">
+        <button id="btn-import" title="Import a CSV export — rebuilds the session (laps, charts, map) from the file">Import CSV</button>
+        <input type="file" id="import-file" accept=".csv,text/csv" hidden>
+      </div>
+      <div id="session-list"><div class="empty-hint">loading…</div></div>
+    </aside>
+
+    <div class="detail" id="detail">
+      <div class="empty-hint">No session selected. Drive with Data Out enabled (or run the
+        simulator) and sessions will appear on the left.</div>
+    </div>
   </div>
 </div>
 
@@ -66,7 +101,7 @@
     </div>
     <div class="car-line" id="header-car"></div>
     <section class="panel">
-      <h2>Laps</h2>
+      <h2><span class="bar-accent">▌</span> Laps</h2>
       <table class="laps">
         <thead><tr><th>Compare</th><th>Lap</th><th>Time</th><th>Gap</th><th></th><th></th></tr></thead>
         <tbody id="lap-rows"></tbody>
@@ -74,7 +109,7 @@
     </section>
     <div id="cmp-tray" class="cmp-tray" style="display:none"></div>
     <section class="panel">
-      <h2>Track map</h2>
+      <h2><span class="bar-accent">▌</span> Track map</h2>
       <div class="map-row">
         <div>
           <canvas id="trackmap"></canvas>
@@ -101,11 +136,11 @@
       </div>
     </section>
     <section class="panel">
-      <h2>Lap comparison <span id="cmp-label" style="text-transform:none"></span></h2>
+      <h2><span class="bar-accent">▌</span> Lap comparison <span id="cmp-label" style="text-transform:none"></span></h2>
       <div class="charts" id="charts"><div class="empty-hint">Tag laps in the table above (or ＋ on a session card) to compare.</div></div>
     </section>
     <section class="panel" id="raw-section" style="display:none">
-      <h2>Raw data at cursor <span id="raw-pos" style="text-transform:none"></span></h2>
+      <h2><span class="bar-accent">▌</span> Raw data at cursor <span id="raw-pos" style="text-transform:none"></span></h2>
       <p class="raw-hint">Hover a comparison chart — every packet channel at that spot, per picked lap,
         in game-native units. Click a chart to pin a spot: values return to it whenever the
         cursor leaves the charts (click it again, or double-click, to unpin). Without a pin,
@@ -119,5 +154,9 @@
 <script src="js/common.js"></script>
 <script src="js/settings.js"></script>
 <script src="js/analysis.js"></script>
+<script>
+  document.getElementById("sidebar-settings-btn")?.addEventListener("click", openSettings);
+</script>
 </body>
 </html>
+

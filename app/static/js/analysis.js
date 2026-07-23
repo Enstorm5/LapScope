@@ -24,6 +24,10 @@ function accentPickPalette() {
   return pal;
 }
 let PICK_COLORS = accentPickPalette();
+onSettingsChange(() => {
+  PICK_COLORS = accentPickPalette();
+  if (typeof renderDetail === "function" && state.session) renderDetail();
+});
 
 const state = {
   sessionId: null,
