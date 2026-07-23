@@ -208,7 +208,6 @@ header {
 main.grid {
   display: grid;
   grid-template-columns: repeat(12, 1fr);
-  grid-auto-flow: dense;
   align-items: start;
   gap: 14px;
   padding: 18px 24px;

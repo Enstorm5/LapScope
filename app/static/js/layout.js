@@ -321,46 +321,56 @@ function initWidgetControls() {
           ghost.style.left = `${moveEv.clientX - 60}px`;
           ghost.style.top = `${moveEv.clientY - 20}px`;
 
-          // Find the widget under the cursor
           const allWidgets = Array.from(grid.querySelectorAll(".widget-wrapper"));
-          let closestWidget = null;
-          let closestDist = Infinity;
-          let insertAfter = false;
 
-          for (const target of allWidgets) {
-            if (target.id === id) continue;
-            const rect = target.getBoundingClientRect();
-            const centerY = rect.top + rect.height / 2;
-            const dist = Math.abs(moveEv.clientY - centerY);
-            if (dist < closestDist) {
-              closestDist = dist;
-              closestWidget = target;
-              insertAfter = moveEv.clientY > centerY;
+          // Primary: find widget directly under cursor using elementFromPoint
+          let hitWidget = null;
+          ghost.style.display = "none"; // temporarily hide ghost so it doesn't block
+          const elUnder = document.elementFromPoint(moveEv.clientX, moveEv.clientY);
+          ghost.style.display = "";
+          if (elUnder) {
+            hitWidget = elUnder.closest(".widget-wrapper");
+            if (hitWidget && (hitWidget.id === id || !grid.contains(hitWidget))) hitWidget = null;
+          }
+
+          // Fallback: find closest widget by 2D center distance
+          if (!hitWidget) {
+            let closestDist = Infinity;
+            for (const target of allWidgets) {
+              if (target.id === id) continue;
+              const rect = target.getBoundingClientRect();
+              const cx = rect.left + rect.width / 2;
+              const cy = rect.top + rect.height / 2;
+              const dist = Math.hypot(moveEv.clientX - cx, moveEv.clientY - cy);
+              if (dist < closestDist && dist < 400) {
+                closestDist = dist;
+                hitWidget = target;
+              }
             }
           }
 
           // Clear all previous indicators
           allWidgets.forEach(t => t.classList.remove("drag-over", "drag-over-top", "drag-over-bottom", "drag-over-left", "drag-over-right"));
 
-          if (closestWidget) {
-            dropTargetId = closestWidget.id;
-            dropAfter = insertAfter;
-            const rect = closestWidget.getBoundingClientRect();
+          if (hitWidget) {
+            dropTargetId = hitWidget.id;
+            const rect = hitWidget.getBoundingClientRect();
+            const relY = moveEv.clientY - rect.top;
+            dropAfter = relY > (rect.height / 2);
 
-            // Show insertion line marker at edge of target
+            // Show insertion line marker
             marker.style.display = "block";
             marker.style.cssText = `
               position: fixed; z-index: 9998; pointer-events: none;
               left: ${rect.left}px; width: ${rect.width}px;
-              height: 4px; background: var(--accent, #00e5ff);
+              height: 4px; background: #00e5ff;
               border-radius: 2px;
               box-shadow: 0 0 12px rgba(0, 229, 255, 0.6);
-              top: ${insertAfter ? rect.bottom + 3 : rect.top - 7}px;
-              transition: top 0.08s ease, left 0.08s ease;
+              top: ${dropAfter ? rect.bottom + 3 : rect.top - 7}px;
             `;
 
-            closestWidget.classList.add("drag-over");
-            closestWidget.classList.add(insertAfter ? "drag-over-bottom" : "drag-over-top");
+            hitWidget.classList.add("drag-over");
+            hitWidget.classList.add(dropAfter ? "drag-over-bottom" : "drag-over-top");
           } else {
             marker.style.display = "none";
             dropTargetId = null;
