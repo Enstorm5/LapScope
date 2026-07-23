@@ -1912,6 +1912,16 @@ body.layout-edit-mode .widget-wrapper {
   background: var(--accent-dim) !important;
 }
 
+.widget-wrapper.drag-over-left {
+  border-left: 4px solid var(--accent) !important;
+  box-shadow: -6px 0 16px var(--accent-glow) !important;
+}
+
+.widget-wrapper.drag-over-right {
+  border-right: 4px solid var(--accent) !important;
+  box-shadow: 6px 0 16px var(--accent-glow) !important;
+}
+
 .drag-handle {
   cursor: move;
   font-weight: 800;

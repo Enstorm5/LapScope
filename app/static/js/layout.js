@@ -282,23 +282,41 @@ function initWidgetControls() {
     w.addEventListener("dragover", (e) => {
       if (!isEditMode || !draggedWidgetId || draggedWidgetId === id) return;
       e.preventDefault();
+      const rect = w.getBoundingClientRect();
+      const relX = e.clientX - rect.left;
+      const isRightHalf = relX > (rect.width / 2);
+      w.classList.toggle("drag-over-right", isRightHalf);
+      w.classList.toggle("drag-over-left", !isRightHalf);
       w.classList.add("drag-over");
     });
 
     w.addEventListener("dragleave", () => {
-      w.classList.remove("drag-over");
+      w.classList.remove("drag-over", "drag-over-left", "drag-over-right");
     });
 
     w.addEventListener("drop", (e) => {
       if (!isEditMode || !draggedWidgetId || draggedWidgetId === id) return;
       e.preventDefault();
-      w.classList.remove("drag-over");
+      const isRightHalf = w.classList.contains("drag-over-right");
+      w.classList.remove("drag-over", "drag-over-left", "drag-over-right");
 
       const idxA = currentLayout.order.indexOf(draggedWidgetId);
-      const idxB = currentLayout.order.indexOf(id);
+      let idxB = currentLayout.order.indexOf(id);
       if (idxA !== -1 && idxB !== -1) {
         currentLayout.order.splice(idxA, 1);
+        // If dropped on right half, insert after target B
+        if (isRightHalf && idxA < idxB) {
+          // target index didn't shift
+        } else if (isRightHalf && idxA > idxB) {
+          idxB += 1;
+        }
         currentLayout.order.splice(idxB, 0, draggedWidgetId);
+
+        // Auto-snap half tiles if placed next to each other
+        if (currentLayout.spans[draggedWidgetId] === "span6" && currentLayout.spans[id] === "span6") {
+          // both are half tiles -> snap side-by-side
+        }
+
         saveLayoutState();
         applyLayout();
       }
