@@ -1342,7 +1342,70 @@ select {
 .raw-table td:first-child, .raw-table th:first-child { text-align: left; color: var(--muted); padding-left: 0; }
 .raw-table td:first-child em { font-style: normal; opacity: 0.65; margin-left: 4px; font-size: 0.7rem; }
 .raw-table tr:hover td { background: rgba(255, 255, 255, 0.03); }
-.raw-hint { color: var(--muted); font-size: 0.8rem; margin: 0 0 4px; }
+/* ---------- Mode Scoping (Cyber Racing vs Neo-Brutalist) ---------- */
+
+/* By default (Cyber Racing mode): hide brutalist elements */
+.brutalist-only,
+.hdr-brutalist {
+  display: none !important;
+}
+
+.hdr-cyber,
+.cyber-only {
+  display: inline-block;
+}
+canvas.cyber-only {
+  display: block !important;
+}
+
+/* Transmission Card in Cyber Racing Mode */
+.brutalist-gear-panel {
+  background: var(--panel-hi);
+  border: 1px solid var(--panel-edge);
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.gear-card-hdr {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--display);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+}
+
+.gear-card-hdr .rpm-lbl {
+  font-size: 0.68rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.gear-card-hdr .rpm-lbl b {
+  color: var(--accent);
+}
+
+.gear-hero-box {
+  background: rgba(0, 229, 255, 0.05);
+  border: 1px solid var(--panel-edge);
+  border-radius: 6px;
+  color: var(--accent);
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--display);
+  font-size: 4.5rem;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  margin-top: 10px;
+  text-shadow: 0 0 16px var(--accent-glow);
+}
 
 /* ---------- Neo-Brutalist Theme (body.theme-brutalist) ---------- */
 
@@ -1360,6 +1423,29 @@ body.theme-brutalist {
   --bad: #ff5252;
   --text: #ffffff;
   --muted: #6b7c96;
+}
+
+body.theme-brutalist .brutalist-only,
+body.theme-brutalist .hdr-brutalist {
+  display: block !important;
+}
+
+body.theme-brutalist span.hdr-brutalist {
+  display: inline-block !important;
+}
+
+body.theme-brutalist .hdr-cyber,
+body.theme-brutalist .cyber-only {
+  display: none !important;
+}
+
+body.theme-brutalist .gear-hero-box {
+  background: var(--accent);
+  color: #000000;
+  text-shadow: none;
+  border: none;
+  border-radius: 0;
+  height: 140px;
 }
 
 body.theme-brutalist .app-sidebar {
