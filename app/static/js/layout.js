@@ -3,7 +3,7 @@
 const LAYOUT_KEY = "ls_widget_layout";
 
 const DEFAULT_LAYOUT = {
-  order: ["w-cluster", "w-transmission", "w-session", "w-tyre", "w-inputs", "w-friction", "w-strip", "w-circuit", "w-raw"],
+  order: ["w-cluster", "w-transmission", "w-session", "w-tyre", "w-inputs", "w-friction", "w-surface", "w-apex", "w-impact", "w-strip", "w-circuit", "w-raw"],
   spans: {
     "w-cluster": "span6",
     "w-transmission": "span3",
@@ -11,6 +11,9 @@ const DEFAULT_LAYOUT = {
     "w-tyre": "span7",
     "w-inputs": "span5",
     "w-friction": "span5",
+    "w-surface": "span6",
+    "w-apex": "span6",
+    "w-impact": "span6",
     "w-strip": "span7",
     "w-circuit": "span5",
     "w-raw": "span12",
@@ -22,6 +25,9 @@ const DEFAULT_LAYOUT = {
     "w-tyre": 1.0,
     "w-inputs": 1.0,
     "w-friction": 1.0,
+    "w-surface": 1.0,
+    "w-apex": 1.0,
+    "w-impact": 1.0,
     "w-strip": 1.0,
     "w-circuit": 1.0,
     "w-raw": 1.0,
@@ -284,39 +290,41 @@ function initWidgetControls() {
       e.preventDefault();
       const rect = w.getBoundingClientRect();
       const relX = e.clientX - rect.left;
+      const relY = e.clientY - rect.top;
       const isRightHalf = relX > (rect.width / 2);
-      w.classList.toggle("drag-over-right", isRightHalf);
-      w.classList.toggle("drag-over-left", !isRightHalf);
+      const isBottomHalf = relY > (rect.height / 2);
+
+      w.classList.remove("drag-over-left", "drag-over-right", "drag-over-top", "drag-over-bottom");
+      
+      const dx = Math.abs(relX - rect.width / 2) / (rect.width / 2);
+      const dy = Math.abs(relY - rect.height / 2) / (rect.height / 2);
+
+      if (dx > dy) {
+        w.classList.add(isRightHalf ? "drag-over-right" : "drag-over-left");
+      } else {
+        w.classList.add(isBottomHalf ? "drag-over-bottom" : "drag-over-top");
+      }
       w.classList.add("drag-over");
     });
 
     w.addEventListener("dragleave", () => {
-      w.classList.remove("drag-over", "drag-over-left", "drag-over-right");
+      w.classList.remove("drag-over", "drag-over-left", "drag-over-right", "drag-over-top", "drag-over-bottom");
     });
 
     w.addEventListener("drop", (e) => {
       if (!isEditMode || !draggedWidgetId || draggedWidgetId === id) return;
       e.preventDefault();
-      const isRightHalf = w.classList.contains("drag-over-right");
-      w.classList.remove("drag-over", "drag-over-left", "drag-over-right");
+      const isAfter = w.classList.contains("drag-over-right") || w.classList.contains("drag-over-bottom");
+      w.classList.remove("drag-over", "drag-over-left", "drag-over-right", "drag-over-top", "drag-over-bottom");
 
       const idxA = currentLayout.order.indexOf(draggedWidgetId);
       let idxB = currentLayout.order.indexOf(id);
       if (idxA !== -1 && idxB !== -1) {
         currentLayout.order.splice(idxA, 1);
-        // If dropped on right half, insert after target B
-        if (isRightHalf && idxA < idxB) {
-          // target index didn't shift
-        } else if (isRightHalf && idxA > idxB) {
+        if (isAfter && idxA > idxB) {
           idxB += 1;
         }
         currentLayout.order.splice(idxB, 0, draggedWidgetId);
-
-        // Auto-snap half tiles if placed next to each other
-        if (currentLayout.spans[draggedWidgetId] === "span6" && currentLayout.spans[id] === "span6") {
-          // both are half tiles -> snap side-by-side
-        }
-
         saveLayoutState();
         applyLayout();
       }

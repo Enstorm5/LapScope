@@ -333,6 +333,76 @@
       </div>
     </section>
 
+    <!-- Aquaplaning & Surface Condition Panel -->
+    <section class="panel span6" id="w-surface">
+      <h2><span class="bar-accent">▌</span> SURFACE & AQUAPLANING MONITOR</h2>
+      <div id="aqua-alert-banner" class="aqua-alert hidden">
+        <span class="alert-icon">🌊</span>
+        <span class="alert-text">WARNING: HIGH AQUAPLANING RISK</span>
+      </div>
+      <div class="puddle-grid">
+        <div class="puddle-card">
+          <span class="p-lbl">FL PUDDLE</span>
+          <div class="p-track"><div id="puddle-fl-bar" class="p-fill" style="height: 0%"></div></div>
+          <b id="puddle-fl-val">0.0mm</b>
+        </div>
+        <div class="puddle-card">
+          <span class="p-lbl">FR PUDDLE</span>
+          <div class="p-track"><div id="puddle-fr-bar" class="p-fill" style="height: 0%"></div></div>
+          <b id="puddle-fr-val">0.0mm</b>
+        </div>
+        <div class="puddle-card">
+          <span class="p-lbl">RL PUDDLE</span>
+          <div class="p-track"><div id="puddle-rl-bar" class="p-fill" style="height: 0%"></div></div>
+          <b id="puddle-rl-val">0.0mm</b>
+        </div>
+        <div class="puddle-card">
+          <span class="p-lbl">RR PUDDLE</span>
+          <div class="p-track"><div id="puddle-rr-bar" class="p-fill" style="height: 0%"></div></div>
+          <b id="puddle-rr-val" class="p-val">0.0mm</b>
+        </div>
+      </div>
+      <div class="kerb-row">
+        <span>RUMBLE STRIP DETECT:</span>
+        <span id="kerb-fl" class="kerb-chip">FL</span>
+        <span id="kerb-fr" class="kerb-chip">FR</span>
+        <span id="kerb-rl" class="kerb-chip">RL</span>
+        <span id="kerb-rr" class="kerb-chip">RR</span>
+      </div>
+    </section>
+
+    <!-- Apex Precision & AI Braking Delta Panel -->
+    <section class="panel span6" id="w-apex">
+      <h2><span class="bar-accent">▌</span> APEX PRECISION & BRAKE DELTA</h2>
+      <div class="apex-flex">
+        <div class="apex-metric">
+          <div class="apex-hdr">RACING LINE ADHERENCE</div>
+          <div class="apex-pct" id="line-pct">98%</div>
+          <div class="apex-track"><div id="line-bar" class="apex-fill" style="width: 98%"></div></div>
+        </div>
+        <div class="apex-metric">
+          <div class="apex-hdr">AI BRAKE POINT DELTA</div>
+          <div class="apex-delta-val" id="ai-brake-val">+0.0s</div>
+          <div class="apex-sub" id="ai-brake-sub">BRAKING OPTIMAL</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Impact Energy & Collision Dynamics Panel -->
+    <section class="panel span6" id="w-impact">
+      <h2><span class="bar-accent">▌</span> IMPACT DYNAMICS & OBSTACLE MASS</h2>
+      <div class="impact-readout">
+        <div class="impact-card">
+          <div class="imp-lbl">IMPACT VELOCITY DELTA</div>
+          <b id="imp-vel-val">0.0 m/s</b>
+        </div>
+        <div class="impact-card">
+          <div class="imp-lbl">COLLISION MASS</div>
+          <b id="imp-mass-val">0 kg</b>
+        </div>
+      </div>
+    </section>
+
     <section class="panel span12" id="w-raw" style="display:none">
       <h2><span class="bar-accent">▌</span> RAW TELEMETRY — packet values, game-native units
         <button id="raw-hold" title="Freeze the displayed values to read them — telemetry keeps recording">⏸ Hold</button>

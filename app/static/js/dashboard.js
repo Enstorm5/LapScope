@@ -507,6 +507,74 @@ function render() {
   const elSessBestVal = $("session-best-val"); if (elSessBestVal) elSessBestVal.textContent = fmtLap(f.session_best ?? f.best_lap);
   const elLapNo = $("lap-no"); if (elLapNo) elLapNo.textContent = race ? `${f.lap_number + 1} / ${f.race_position || "–"}` : "– / –";
 
+  // Car Spec Header Chip (car_class, car_pi, drivetrain_type, num_cylinders)
+  const carChip = $("car-chip");
+  if (carChip) {
+    const classes = ["D", "C", "B", "A", "S1", "S2", "X"];
+    const dtTypes = ["FWD", "RWD", "AWD"];
+    const cClass = classes[f.car_class] || "S2";
+    const cPI = f.car_pi || 900;
+    const dt = dtTypes[f.drivetrain_type] || "AWD";
+    const cyl = f.num_cylinders ? `${f.num_cylinders} CYL` : "V8";
+    carChip.style.display = "inline-flex";
+    carChip.innerHTML = `<span class="car-pi-badge">${cClass} ${cPI}</span> <span class="car-dt">${dt}</span> <span class="car-cyl">${cyl}</span>`;
+  }
+
+  // Puddle Depth & Aquaplaning Monitor (wheel_in_puddle & wheel_on_rumble_strip)
+  if (f.wheel_in_puddle && f.wheel_in_puddle.length >= 4) {
+    const [pfl, pfr, prl, prr] = f.wheel_in_puddle;
+    const maxP = Math.max(pfl, pfr, prl, prr);
+    const aquaBanner = $("aqua-alert-banner");
+    if (aquaBanner) {
+      aquaBanner.classList.toggle("hidden", maxP < 0.25);
+    }
+    const setPuddle = (idVal, idBar, val) => {
+      const elV = $(idVal), elB = $(idBar);
+      if (elV) elV.textContent = `${(val * 10).toFixed(1)}mm`;
+      if (elB) elB.style.height = `${Math.min(100, (val / 0.5) * 100)}%`;
+    };
+    setPuddle("puddle-fl-val", "puddle-fl-bar", pfl);
+    setPuddle("puddle-fr-val", "puddle-fr-bar", pfr);
+    setPuddle("puddle-rl-val", "puddle-rl-bar", prl);
+    setPuddle("puddle-rr-val", "puddle-rr-bar", prr);
+  }
+
+  if (f.wheel_on_rumble_strip && f.wheel_on_rumble_strip.length >= 4) {
+    const [kfl, kfr, krl, krr] = f.wheel_on_rumble_strip;
+    const setKerb = (id, hit) => {
+      const el = $(id);
+      if (el) el.classList.toggle("active", !!hit);
+    };
+    setKerb("kerb-fl", kfl);
+    setKerb("kerb-fr", kfr);
+    setKerb("kerb-rl", krl);
+    setKerb("kerb-rr", krr);
+  }
+
+  // Apex Precision & AI Brake Delta
+  if (typeof f.normalized_driving_line !== "undefined") {
+    const lineAdherence = Math.max(0, Math.min(100, Math.round(100 - Math.abs(f.normalized_driving_line || 0) * 0.78)));
+    const elLinePct = $("line-pct"); if (elLinePct) elLinePct.textContent = `${lineAdherence}%`;
+    const elLineBar = $("line-bar"); if (elLineBar) elLineBar.style.width = `${lineAdherence}%`;
+  }
+
+  if (typeof f.normalized_ai_brake_difference !== "undefined") {
+    const aiBrake = (f.normalized_ai_brake_difference || 0) / 127.0;
+    const elAiVal = $("ai-brake-val");
+    const elAiSub = $("ai-brake-sub");
+    if (elAiVal) {
+      elAiVal.textContent = `${aiBrake >= 0 ? "+" : ""}${aiBrake.toFixed(1)}s`;
+      elAiVal.style.color = aiBrake > 0.2 ? "#00ff88" : aiBrake < -0.2 ? "#ff3355" : "#00e5ff";
+    }
+    if (elAiSub) {
+      elAiSub.textContent = aiBrake > 0.2 ? "BRAKING LATER (LATE APEX)" : aiBrake < -0.2 ? "BRAKING EARLY" : "BRAKING OPTIMAL";
+    }
+  }
+
+  // Impact Dynamics & Collision Mass (smashable_vel_diff, smashable_mass)
+  const elImpVel = $("imp-vel-val"); if (elImpVel) elImpVel.textContent = `${(f.smashable_vel_diff || 0).toFixed(1)} m/s`;
+  const elImpMass = $("imp-mass-val"); if (elImpMass) elImpMass.textContent = `${Math.round(f.smashable_mass || 0)} kg`;
+
   const d = $("delta");
   if (d) {
     if (f.delta == null) {
