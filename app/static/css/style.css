@@ -1957,6 +1957,31 @@ body.layout-edit-mode .widget-wrapper {
   transition: transform 0.1s linear;
 }
 
+.resize-corner-handle {
+  display: none;
+  position: absolute;
+  bottom: 2px;
+  right: 4px;
+  width: 18px;
+  height: 18px;
+  color: var(--accent);
+  font-size: 0.8rem;
+  line-height: 18px;
+  cursor: se-resize;
+  user-select: none;
+  z-index: 25;
+  transition: transform 0.1s ease;
+}
+
+body.layout-edit-mode .resize-corner-handle {
+  display: block;
+}
+
+.resize-corner-handle:hover {
+  color: #ffffff;
+  transform: scale(1.25);
+}
+
 /* ---------- Full Width Top Standalone Shift Lights Bar ---------- */
 
 .top-shift-bar {

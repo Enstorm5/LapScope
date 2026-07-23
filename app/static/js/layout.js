@@ -97,9 +97,13 @@ function setSpan(id, newSpan) {
   applyLayout();
 }
 
-function setScale(id, delta) {
+function setScale(id, delta, setAbsolute = false) {
   let cur = currentLayout.scales[id] || 1.0;
-  cur = Math.max(0.7, Math.min(1.5, parseFloat((cur + delta).toFixed(1))));
+  if (setAbsolute) {
+    cur = Math.max(0.5, Math.min(2.0, parseFloat(delta.toFixed(2))));
+  } else {
+    cur = Math.max(0.5, Math.min(2.0, parseFloat((cur + delta).toFixed(2))));
+  }
   currentLayout.scales[id] = cur;
   saveLayoutState();
   applyLayout();
@@ -132,6 +136,7 @@ function initWidgetControls() {
   const widgets = Array.from(grid.children);
   for (const w of widgets) {
     if (!w.id) continue;
+    const id = w.id;
     
     // Inject control bar if not present
     if (!w.querySelector(".widget-ctrl-bar")) {
@@ -148,7 +153,7 @@ function initWidgetControls() {
           <button type="button" class="btn-span" data-span="span9">XL</button>
           <button type="button" class="btn-span" data-span="span12">FULL</button>
         </div>
-        <div class="zoom-ctrls" title="Zoom/Scale content">
+        <div class="zoom-ctrls" title="Zoom/Scale content (or Ctrl + Scroll / Pinch)">
           <button type="button" class="btn-zoom-out">−</button>
           <span class="zoom-val-lbl">100%</span>
           <button type="button" class="btn-zoom-in">+</button>
@@ -165,10 +170,84 @@ function initWidgetControls() {
         }
         w.appendChild(inner);
       }
+
+      // Add interactive bottom-right corner resize handle
+      const corner = document.createElement("div");
+      corner.className = "resize-corner-handle";
+      corner.title = "Drag corner to fluidly resize width and scale";
+      corner.innerHTML = "◢";
+      w.appendChild(corner);
+
+      // Corner Drag-to-Resize Logic
+      let startX = 0, startY = 0, startWidth = 0, startScale = 1.0;
+      corner.addEventListener("mousedown", (e) => {
+        e.preventDefault();
+        startX = e.clientX;
+        startY = e.clientY;
+        startWidth = w.offsetWidth;
+        startScale = currentLayout.scales[id] || 1.0;
+
+        const onMouseMove = (moveEv) => {
+          const dx = moveEv.clientX - startX;
+          const dy = moveEv.clientY - startY;
+
+          // Adjust grid span based on width drag
+          const gridWidth = grid.offsetWidth;
+          const colWidth = gridWidth / 12;
+          const newWidth = Math.max(120, startWidth + dx);
+          const approxSpan = Math.max(1, Math.min(12, Math.round(newWidth / colWidth)));
+          setSpan(id, `span${approxSpan}`);
+
+          // Adjust scale based on vertical drag
+          const scaleDelta = (dy / 200);
+          setScale(id, startScale + scaleDelta, true);
+        };
+
+        const onMouseUp = () => {
+          document.removeEventListener("mousemove", onMouseMove);
+          document.removeEventListener("mouseup", onMouseUp);
+        };
+
+        document.addEventListener("mousemove", onMouseMove);
+        document.addEventListener("mouseup", onMouseUp);
+      });
     }
 
-    // Bind event handlers
-    const id = w.id;
+    // Pinch / Mouse Wheel Zoom handler (Ctrl + Scroll or Pinch gesture)
+    w.addEventListener("wheel", (e) => {
+      if (e.ctrlKey || isEditMode) {
+        e.preventDefault();
+        const delta = e.deltaY < 0 ? 0.05 : -0.05;
+        setScale(id, delta);
+      }
+    }, { passive: false });
+
+    // Touch Pinch Zoom Handler
+    let touchDist = 0;
+    w.addEventListener("touchstart", (e) => {
+      if (e.touches.length === 2) {
+        touchDist = Math.hypot(
+          e.touches[0].pageX - e.touches[1].pageX,
+          e.touches[0].pageY - e.touches[1].pageY
+        );
+      }
+    });
+
+    w.addEventListener("touchmove", (e) => {
+      if (e.touches.length === 2) {
+        const curDist = Math.hypot(
+          e.touches[0].pageX - e.touches[1].pageX,
+          e.touches[0].pageY - e.touches[1].pageY
+        );
+        if (touchDist > 0) {
+          const delta = (curDist - touchDist) / 200;
+          setScale(id, delta);
+          touchDist = curDist;
+        }
+      }
+    });
+
+    // Drag & Drop Reordering handlers
     const dragHandle = w.querySelector(".drag-handle");
     if (dragHandle) {
       dragHandle.addEventListener("dragstart", (e) => {
