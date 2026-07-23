@@ -25,7 +25,8 @@ const DEFAULT_LAYOUT = {
     "w-strip": 1.0,
     "w-circuit": 1.0,
     "w-raw": 1.0,
-  }
+  },
+  heights: {}
 };
 
 function loadLayout() {
@@ -35,11 +36,12 @@ function loadLayout() {
       return {
         order: data.order,
         spans: { ...DEFAULT_LAYOUT.spans, ...data.spans },
-        scales: { ...DEFAULT_LAYOUT.scales, ...(data.scales || {}) }
+        scales: { ...DEFAULT_LAYOUT.scales, ...(data.scales || {}) },
+        heights: { ...(DEFAULT_LAYOUT.heights || {}), ...(data.heights || {}) }
       };
     }
   } catch (e) { /* private mode or invalid JSON */ }
-  return { ...DEFAULT_LAYOUT };
+  return { ...DEFAULT_LAYOUT, heights: {} };
 }
 
 let currentLayout = loadLayout();
@@ -68,13 +70,22 @@ function applyLayout() {
     if (el) grid.appendChild(el);
   }
 
-  // 2. Apply grid spans and zoom scale
+  // 2. Apply grid spans, freeform height, and zoom scale
   for (const [id, el] of existingMap.entries()) {
     const span = currentLayout.spans[id] || "span4";
-    // Only replace the span class, preserving all other classes (panel, cluster, session-panel, etc.)
     el.classList.remove(...Array.from(el.classList).filter(c => /^span\d+$/.test(c)));
     el.classList.add(span, "widget-wrapper");
     
+    // Apply freeform custom height if set
+    const h = currentLayout.heights ? currentLayout.heights[id] : null;
+    if (h) {
+      el.style.minHeight = `${h}px`;
+      el.style.height = `${h}px`;
+    } else {
+      el.style.minHeight = "";
+      el.style.height = "";
+    }
+
     const scale = currentLayout.scales[id] || 1.0;
     const inner = el.querySelector(".widget-scale-inner");
     if (inner) {
@@ -113,7 +124,8 @@ function resetLayout() {
   currentLayout = {
     order: [...DEFAULT_LAYOUT.order],
     spans: { ...DEFAULT_LAYOUT.spans },
-    scales: { ...DEFAULT_LAYOUT.scales }
+    scales: { ...DEFAULT_LAYOUT.scales },
+    heights: {}
   };
   saveLayoutState();
   applyLayout();
@@ -174,33 +186,37 @@ function initWidgetControls() {
       // Add interactive bottom-right corner resize handle
       const corner = document.createElement("div");
       corner.className = "resize-corner-handle";
-      corner.title = "Drag corner to fluidly resize width and scale";
+      corner.title = "Drag corner to fluidly resize width and height";
       corner.innerHTML = "◢";
       w.appendChild(corner);
 
-      // Corner Drag-to-Resize Logic
-      let startX = 0, startY = 0, startWidth = 0, startScale = 1.0;
+      // Freeform Corner Drag-to-Resize Logic (Horizontal width + Vertical height)
+      let startX = 0, startY = 0, startWidth = 0, startHeight = 0;
       corner.addEventListener("mousedown", (e) => {
         e.preventDefault();
         startX = e.clientX;
         startY = e.clientY;
         startWidth = w.offsetWidth;
-        startScale = currentLayout.scales[id] || 1.0;
+        startHeight = w.offsetHeight;
 
         const onMouseMove = (moveEv) => {
           const dx = moveEv.clientX - startX;
           const dy = moveEv.clientY - startY;
 
-          // Adjust grid span based on width drag
+          // Freeform horizontal resizing (updates grid column span)
           const gridWidth = grid.offsetWidth;
           const colWidth = gridWidth / 12;
-          const newWidth = Math.max(120, startWidth + dx);
+          const newWidth = Math.max(140, startWidth + dx);
           const approxSpan = Math.max(1, Math.min(12, Math.round(newWidth / colWidth)));
-          setSpan(id, `span${approxSpan}`);
+          currentLayout.spans[id] = `span${approxSpan}`;
 
-          // Adjust scale based on vertical drag
-          const scaleDelta = (dy / 200);
-          setScale(id, startScale + scaleDelta, true);
+          // Freeform vertical resizing (updates tile height to any pixel size!)
+          const newHeight = Math.max(100, Math.round(startHeight + dy));
+          if (!currentLayout.heights) currentLayout.heights = {};
+          currentLayout.heights[id] = newHeight;
+
+          saveLayoutState();
+          applyLayout();
         };
 
         const onMouseUp = () => {
