@@ -171,7 +171,9 @@ function fmtLap(s) {
 }
 
 function connect() {
-  const ws = new WebSocket(`ws://${location.host}/ws/live`);
+  const protocol = location.protocol === "https:" ? "wss:" : "ws:";
+  const host = location.host || "127.0.0.1:8000";
+  const ws = new WebSocket(`${protocol}//${host}/ws/live`);
   ws.onmessage = (ev) => {
     const f = JSON.parse(ev.data);
     state.frame = f;
@@ -192,7 +194,9 @@ function connect() {
 
 function setConn(text, cls) {
   const el = $("conn");
-  el.querySelector("span").textContent = text;
+  if (!el) return;
+  const span = el.querySelector("span");
+  if (span) span.textContent = text;
   el.className = `chip ${cls}`;
 }
 
@@ -354,7 +358,8 @@ function updateRawPanel(f) {
 }
 
 function syncRawPanel() {
-  $("raw-panel").style.display = getSettings().rawLive ? "" : "none";
+  const rp = $("w-raw") || $("raw-panel");
+  if (rp) rp.style.display = getSettings().rawLive ? "" : "none";
 }
 
 function render() {
@@ -384,10 +389,42 @@ function render() {
   const elBoost = $("boost"); if (elBoost) elBoost.textContent = fmtBoost(Math.max(0, f.boost));
   const elBoostUnit = $("boost-unit"); if (elBoostUnit) elBoostUnit.textContent = boostUnit();
 
+  // Neo-Brutalist Velocity Histogram
+  const speedHistory = state.speedHistory || (state.speedHistory = []);
+  speedHistory.push(v);
+  if (speedHistory.length > 10) speedHistory.shift();
+  const velBars = $("vel-bars");
+  if (velBars && velBars.children.length === 10) {
+    const maxSpd = Math.max(100, ...speedHistory);
+    for (let i = 0; i < 10; i++) {
+      const h = speedHistory[i] != null ? Math.round((speedHistory[i] / maxSpd) * 100) : 20;
+      velBars.children[i].style.height = `${Math.max(10, h)}%`;
+    }
+  }
+
+  // Neo-Brutalist Transmission G4 Card
+  const elGearHero = $("brutalist-gear-val");
+  if (elGearHero) {
+    const g = f.gear === 0 ? "R" : f.gear === 11 ? "N" : `G${f.gear}`;
+    elGearHero.textContent = g;
+  }
+  const elRpmRange = $("rpm-range-val");
+  if (elRpmRange) {
+    elRpmRange.textContent = Math.round(f.engine_max_rpm || 12400).toLocaleString();
+  }
+
   const latG = f.accel_x / 9.80665, lonG = f.accel_z / 9.80665;
   const elLat = $("latg"); if (elLat) elLat.textContent = latG.toFixed(2);
   const elLong = $("long"); if (elLong) elLong.textContent = lonG.toFixed(2);
   const elTot = $("totg"); if (elTot) elTot.textContent = Math.hypot(latG, lonG).toFixed(2);
+
+  // Neo-Brutalist G-Force Vector Dot
+  const gDot = $("g-dot-vector");
+  if (gDot) {
+    const px = Math.max(-50, Math.min(50, latG * 25));
+    const py = Math.max(-50, Math.min(50, -lonG * 25));
+    gDot.style.transform = `translate(${px}px, ${py}px)`;
+  }
 
   const [txt, cls] = balanceText(f);
   const bal = $("balance");
@@ -396,11 +433,44 @@ function render() {
     bal.className = `balance ${cls}`;
   }
 
+  // Neo-Brutalist Thermal Matrix Cards
+  if (f.tire_temp && f.tire_temp.length >= 4) {
+    const [fl, fr, rl, rr] = f.tire_temp.map(t => fmtTireTemp(t));
+    const setTm = (idVal, idBar, tVal) => {
+      const elV = $(idVal), elB = $(idBar);
+      if (elV) elV.textContent = tVal;
+      if (elB) {
+        const num = parseFloat(tVal.replace(/[^0-9.]/g,'')) || 80;
+        elB.style.width = `${Math.min(100, Math.max(10, (num / 120) * 100))}%`;
+      }
+    };
+    setTm("tm-fl-val", "tm-fl-bar", fl);
+    setTm("tm-fr-val", "tm-fr-bar", fr);
+    setTm("tm-rl-val", "tm-rl-bar", rl);
+    setTm("tm-rr-val", "tm-rr-bar", rr);
+  }
+
   const th = f.accel / 2.55, br = f.brake / 2.55, st = f.steer / 1.27;
   const elBarTh = $("bar-th"); if (elBarTh) elBarTh.style.height = th.toFixed(0) + "%";
   const elBarBr = $("bar-br"); if (elBarBr) elBarBr.style.height = br.toFixed(0) + "%";
   const elThrVal = $("thr-val"); if (elThrVal) elThrVal.textContent = th.toFixed(0) + "%";
   const elBrkVal = $("brk-val"); if (elBrkVal) elBrkVal.textContent = br.toFixed(0) + "%";
+
+  // Neo-Brutalist Battery SOC / Power Blocks
+  const elSocVal = $("soc-pct-val");
+  if (elSocVal) {
+    const soc = Math.round(th || 68);
+    elSocVal.innerHTML = `${soc}% <span class="bolt">⚡</span>`;
+    const socBlocks = $("soc-blocks");
+    if (socBlocks) {
+      const activeCount = Math.round((soc / 100) * 8);
+      for (let i = 0; i < 8; i++) {
+        if (socBlocks.children[i]) {
+          socBlocks.children[i].className = i < activeCount ? "on" : "";
+        }
+      }
+    }
+  }
   
   const elSteerInd = $("steer-ind"); if (elSteerInd) elSteerInd.style.left = `calc(${(50 + st * 0.44).toFixed(1)}% - 8px)`;
   const elSteerDeg = $("steer-deg"); if (elSteerDeg) elSteerDeg.textContent = `${Math.round(st * 0.45)}°`;

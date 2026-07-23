@@ -12,24 +12,42 @@
 
 <aside class="app-sidebar">
   <div class="sidebar-top">
+    <div class="brutalist-brand-hdr">
+      <div class="proto-title">PROTO-E <span class="proto-num">01</span></div>
+      <div class="proto-conn">CONNECTED - 5G</div>
+    </div>
     <div class="sidebar-icon brand-icon" title="Telemetry System">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
     </div>
     <a href="index.html" class="sidebar-icon active" title="Live Dashboard">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+      <span class="sb-label">Live Feed</span>
     </a>
     <a href="analysis.html" class="sidebar-icon" title="Session Analysis">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+      <span class="sb-label">Lap Analysis</span>
     </a>
-    <a href="#livemap" class="sidebar-icon" title="Circuit Map">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+    <a href="#w-tyre" class="sidebar-icon" title="Tire Data">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/></svg>
+      <span class="sb-label">Tire Data</span>
     </a>
-    <a href="#raw-panel" class="sidebar-icon" title="Raw Telemetry">
+    <a href="#w-raw" class="sidebar-icon" title="Raw Telemetry">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/></svg>
+      <span class="sb-label">Engine Logs</span>
+    </a>
+    <a href="analysis.html" class="sidebar-icon" title="History">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      <span class="sb-label">History</span>
     </a>
   </div>
+
+  <div class="sidebar-mid-btn">
+    <button class="btn-export-data" type="button">EXPORT DATA</button>
+  </div>
+
   <div class="sidebar-bottom">
-    <div class="sidebar-status-dot"></div>
+    <div class="sb-link"><span class="sb-icon">❓</span> Support</div>
+    <div class="sb-link"><span class="sb-icon">⚙</span> Diagnostics</div>
     <div id="sidebar-settings-btn" class="sidebar-icon clickable" title="Settings" aria-label="Settings">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
     </div>
@@ -38,11 +56,11 @@
 
 <div class="app-main">
   <header>
+    <div class="apex-header-title">APEX TELEMETRY</div>
     <nav class="top-nav">
-      <a class="active" href="index.html">LIVE DATA</a>
-      <a href="analysis.html">SESSION</a>
-      <a href="analysis.html">HISTORY</a>
-      <a href="#car-chip">VEHICLE</a>
+      <a class="active" href="index.html">LIVE FEED</a>
+      <a href="analysis.html">ANALYTICS</a>
+      <a href="analysis.html">TELEMETRY</a>
       <a href="javascript:void(0)" onclick="openSettings()">SETUP</a>
     </nav>
 
@@ -78,19 +96,26 @@
   </div>
 
   <main class="grid">
-    <!-- Top Left Main Gauge & Speed Panel -->
-    <section class="panel cluster span7" id="w-cluster">
+    <!-- Top Left Velocity Output Panel -->
+    <section class="panel cluster span6" id="w-cluster">
       <div class="panel-top-bar">
-        <div class="sub-hdr"><span class="bar-accent">▌</span> RPM SCALE</div>
+        <div class="sub-hdr"><span class="bar-accent">▌</span> VELOCITY OUTPUT</div>
         <div id="shift-lights"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
         <div class="eng-temp-wrap">ENGINE TEMP <b id="eng-temp">94°C</b></div>
       </div>
       <div class="cluster-flex">
         <canvas id="rpm"></canvas>
         <div class="speed-block">
-          <div class="sub-hdr micro">VELOCITY</div>
-          <div id="speed">0</div>
+          <div class="sub-hdr micro">VELOCITY OUTPUT</div>
+          <div id="speed" class="speed-italic">0</div>
           <div id="speed-unit">KM/H</div>
+          <div class="vel-histogram" id="vel-bars">
+            <span style="height:25%"></span><span style="height:40%"></span>
+            <span style="height:20%"></span><span style="height:60%"></span>
+            <span style="height:85%"></span><span style="height:70%"></span>
+            <span style="height:95%"></span><span style="height:75%"></span>
+            <span style="height:100%"></span><span style="height:65%"></span>
+          </div>
           <div class="mini-row">
             <span>BOOST <b id="boost">0.0</b> <em id="boost-unit">BAR</em></span>
             <span>POWER <b id="power">0</b> <em id="power-unit">KW</em></span>
@@ -99,16 +124,27 @@
       </div>
     </section>
 
-    <!-- Top Right Session Best & Timing Panel -->
-    <section class="panel span5 session-panel" id="w-session">
+    <!-- Top Right Transmission G4 Block Panel -->
+    <section class="panel span3 brutalist-gear-panel" id="w-transmission">
+      <div class="gear-card-hdr">
+        <span class="lbl">TRANSMISSION</span>
+        <span class="rpm-lbl">RPM RANGE <b id="rpm-range-val">12,400</b></span>
+      </div>
+      <div class="gear-hero-box" id="brutalist-gear-box">
+        <span id="brutalist-gear-val">G4</span>
+      </div>
+    </section>
+
+    <!-- Top Right Lap Delta Panel -->
+    <section class="panel span3 session-panel" id="w-session">
       <div class="session-hdr-row">
-        <div class="session-best-txt">⏱ SESSION BEST: <span id="session-best-val">--:--.---</span></div>
+        <div class="session-best-txt">LAP DELTA</div>
         <div class="live-tag">LIVE SESSION</div>
       </div>
 
-      <div class="lap-main-display">
-        <div class="lap-lbl">CURRENT LAP</div>
-        <div id="lap-cur">0:00.000</div>
+      <div class="lap-main-display brutalist-delta-display">
+        <div id="lap-cur" class="lap-cur-split"><span class="main-time">0:44.</span><span class="sub-time">298</span></div>
+        <div class="timer-sq-icon">⏱</div>
       </div>
 
       <div class="delta-box">
@@ -138,23 +174,42 @@
       </div>
     </section>
 
-    <!-- Friction Circle Panel -->
-    <section class="panel span4" id="w-friction">
-      <h2><span class="bar-accent">▌</span> FRICTION CIRCLE</h2>
-      <canvas id="friction"></canvas>
-      <div class="g-readout">
-        <span>LATERAL <b id="latg">0.00</b> G</span>
-        <span>LONGITUDINAL <b id="long">0.00</b> G</span>
-        <span>TOTAL <b id="totg">0.00</b> G</span>
-      </div>
-    </section>
-
-    <!-- Tyre Telemetry Panel -->
-    <section class="panel span4 tyre-panel" id="w-tyre">
-      <h2><span class="bar-accent">▌</span> TYRE TELEMETRY</h2>
+    <!-- Thermal Matrix Panel -->
+    <section class="panel span7 tyre-panel" id="w-tyre">
+      <h2><span class="bar-accent">▌</span> THERMAL MATRIX <span class="tm-dots"><i></i><i></i><i></i></span></h2>
       <div class="tyre-container">
         <canvas id="grip"></canvas>
       </div>
+
+      <div class="thermal-matrix-cards">
+        <div class="tm-card">
+          <div class="tm-lbl">FRONT LEFT</div>
+          <div class="tm-val" id="tm-fl-val">92°C</div>
+          <div class="tm-bar-track"><div class="tm-bar-fill" id="tm-fl-bar" style="width: 70%"></div></div>
+        </div>
+        <div class="tm-card">
+          <div class="tm-lbl">FRONT RIGHT</div>
+          <div class="tm-val" id="tm-fr-val">94°C</div>
+          <div class="tm-bar-track"><div class="tm-bar-fill" id="tm-fr-bar" style="width: 72%"></div></div>
+        </div>
+        <div class="tm-card">
+          <div class="tm-lbl">REAR LEFT</div>
+          <div class="tm-val" id="tm-rl-val">101°C</div>
+          <div class="tm-bar-track"><div class="tm-bar-fill warn" id="tm-rl-bar" style="width: 85%"></div></div>
+        </div>
+        <div class="tm-card">
+          <div class="tm-lbl">REAR RIGHT</div>
+          <div class="tm-val" id="tm-rr-val">98°C</div>
+          <div class="tm-bar-track"><div class="tm-bar-fill" id="tm-rr-bar" style="width: 78%"></div></div>
+        </div>
+      </div>
+
+      <div class="brutalist-alert-banner">
+        <span class="alert-icon">⚠</span>
+        <span class="alert-text">CRITICAL: BRAKE TEMPERATURE NOMINAL</span>
+        <span class="alert-sq"></span>
+      </div>
+
       <div id="balance" class="balance">—</div>
       <div class="tyre-sub-readout">
         <span>WEAR: <b id="tyre-wear">85%</b></span>
@@ -162,9 +217,16 @@
       </div>
     </section>
 
-    <!-- Driver Inputs Panel -->
-    <section class="panel span4" id="w-inputs">
-      <h2><span class="bar-accent">▌</span> DRIVER INPUTS</h2>
+    <!-- Battery SOC / Inputs Panel -->
+    <section class="panel span5" id="w-inputs">
+      <h2><span class="bar-accent">▌</span> BATTERY SOC</h2>
+      <div class="battery-soc-block">
+        <div class="soc-pct-hero" id="soc-pct-val">68% <span class="bolt">⚡</span></div>
+        <div class="soc-blocks-row" id="soc-blocks">
+          <i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i>
+        </div>
+      </div>
+
       <div class="inputs-flex">
         <div class="vbar">
           <span class="vbar-hdr">THROTTLE</span>
@@ -187,21 +249,51 @@
       </div>
     </section>
 
-    <!-- Input Trace Panel -->
+    <!-- Friction Circle / G-Force Vector Panel -->
+    <section class="panel span5" id="w-friction">
+      <h2><span class="bar-accent">▌</span> G-FORCE VECTOR</h2>
+      <canvas id="friction"></canvas>
+      <div class="g-force-vector-grid">
+        <div class="g-crosshair">
+          <div id="g-dot-vector" class="g-dot-vector"></div>
+        </div>
+      </div>
+      <div class="g-readout">
+        <span>LAT: <b id="latg">1.4G</b></span>
+        <span>LON: <b id="long">-2.16</b></span>
+        <span>TOTAL <b id="totg">0.00</b> G</span>
+      </div>
+    </section>
+
+    <!-- Lap History Log Table Panel -->
     <section class="panel span7" id="w-strip">
-      <h2><span class="bar-accent">▌</span> INPUT TRACE (LAST 10s) — <span class="lg-th">throttle</span> · <span class="lg-br">brake</span> · <span class="lg-st">steering</span></h2>
-      <canvas id="strip"></canvas>
+      <h2><span class="bar-accent">▌</span> LAP HISTORY LOG</h2>
+      <table class="lhl-table">
+        <thead>
+          <tr><th>LAP</th><th>S1</th><th>S2</th><th>S3</th><th>TOTAL</th></tr>
+        </thead>
+        <tbody id="lhl-rows">
+          <tr><td>04</td><td>12.114</td><td>18.442</td><td>13.742</td><td class="total-best">0:44.298</td></tr>
+          <tr><td>03</td><td>12.203</td><td>18.511</td><td>13.811</td><td>0:45.525</td></tr>
+          <tr><td>02</td><td>12.441</td><td>19.002</td><td>14.120</td><td>0:45.563</td></tr>
+        </tbody>
+      </table>
+      <canvas id="strip" style="display:none"></canvas>
     </section>
 
     <!-- Circuit Map Panel -->
     <section class="panel span5" id="w-circuit">
-      <h2><span class="bar-accent">▌</span> CIRCUIT MAP <span id="map-track-name"></span></h2>
+      <div class="circuit-hdr-badge">
+        <span class="lt-tag">LIVE TRACKING</span>
+        <div class="track-title-hero" id="track-title-hero">INTERLAGOS</div>
+      </div>
       <div class="circuit-map-container">
         <canvas id="livemap"></canvas>
         <div class="corner-tag" id="corner-tag">
           <span class="c-lbl">NEXT CORNER</span>
           <span class="c-val" id="next-corner-val">--</span>
         </div>
+        <div class="telemetry-coords-tag">23.7011° S, 46.6972° W</div>
       </div>
     </section>
 

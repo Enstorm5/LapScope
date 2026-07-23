@@ -3,23 +3,25 @@
 const LAYOUT_KEY = "ls_widget_layout";
 
 const DEFAULT_LAYOUT = {
-  order: ["w-cluster", "w-session", "w-friction", "w-tyre", "w-inputs", "w-strip", "w-circuit", "w-raw"],
+  order: ["w-cluster", "w-transmission", "w-session", "w-tyre", "w-inputs", "w-friction", "w-strip", "w-circuit", "w-raw"],
   spans: {
-    "w-cluster": "span7",
-    "w-session": "span5",
-    "w-friction": "span4",
-    "w-tyre": "span4",
-    "w-inputs": "span4",
+    "w-cluster": "span6",
+    "w-transmission": "span3",
+    "w-session": "span3",
+    "w-tyre": "span7",
+    "w-inputs": "span5",
+    "w-friction": "span5",
     "w-strip": "span7",
     "w-circuit": "span5",
     "w-raw": "span12",
   },
   scales: {
     "w-cluster": 1.0,
+    "w-transmission": 1.0,
     "w-session": 1.0,
-    "w-friction": 1.0,
     "w-tyre": 1.0,
     "w-inputs": 1.0,
+    "w-friction": 1.0,
     "w-strip": 1.0,
     "w-circuit": 1.0,
     "w-raw": 1.0,
@@ -69,7 +71,9 @@ function applyLayout() {
   // 2. Apply grid spans and zoom scale
   for (const [id, el] of existingMap.entries()) {
     const span = currentLayout.spans[id] || "span4";
-    el.className = el.className.replace(/\bspan\d+\b/g, "").trim() + " " + span + " widget-wrapper";
+    // Only replace the span class, preserving all other classes (panel, cluster, session-panel, etc.)
+    el.classList.remove(...Array.from(el.classList).filter(c => /^span\d+$/.test(c)));
+    el.classList.add(span, "widget-wrapper");
     
     const scale = currentLayout.scales[id] || 1.0;
     const inner = el.querySelector(".widget-scale-inner");
@@ -136,9 +140,12 @@ function initWidgetControls() {
       bar.innerHTML = `
         <div class="drag-handle" title="Drag to reposition widget" draggable="true">⠿ DRAG</div>
         <div class="span-ctrls" title="Change column width">
-          <button type="button" class="btn-span" data-span="span4">S</button>
-          <button type="button" class="btn-span" data-span="span6">M</button>
-          <button type="button" class="btn-span" data-span="span7">L</button>
+          <button type="button" class="btn-span" data-span="span2">XS</button>
+          <button type="button" class="btn-span" data-span="span3">S</button>
+          <button type="button" class="btn-span" data-span="span4">M</button>
+          <button type="button" class="btn-span" data-span="span6">HALF</button>
+          <button type="button" class="btn-span" data-span="span8">L</button>
+          <button type="button" class="btn-span" data-span="span9">XL</button>
           <button type="button" class="btn-span" data-span="span12">FULL</button>
         </div>
         <div class="zoom-ctrls" title="Zoom/Scale content">

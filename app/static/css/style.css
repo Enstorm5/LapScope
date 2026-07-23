@@ -210,7 +210,8 @@ main.grid {
   grid-template-columns: repeat(12, 1fr);
   gap: 14px;
   padding: 18px 24px;
-  max-width: 1600px;
+  width: 100%;
+  max-width: 100%;
   margin: 0;
   flex: 1;
 }
@@ -248,16 +249,23 @@ main.grid {
 .panel h2 .lg-br { color: var(--bad); }
 .panel h2 .lg-st { color: #93a3b8; }
 
-.span5 { grid-column: span 5; }
-.span4 { grid-column: span 4; }
+.span1 { grid-column: span 1; }
+.span2 { grid-column: span 2; }
 .span3 { grid-column: span 3; }
+.span4 { grid-column: span 4; }
+.span5 { grid-column: span 5; }
+.span6 { grid-column: span 6; }
 .span7 { grid-column: span 7; }
+.span8 { grid-column: span 8; }
+.span9 { grid-column: span 9; }
+.span10 { grid-column: span 10; }
+.span11 { grid-column: span 11; }
 .span12 { grid-column: span 12; }
 @media (max-width: 1100px) {
-  .span5, .span4, .span3, .span7 { grid-column: span 6; }
+  .span3, .span4, .span5, .span6, .span7, .span8, .span9 { grid-column: span 6; }
 }
 @media (max-width: 700px) {
-  .span5, .span4, .span3, .span7 { grid-column: span 12; }
+  .span1, .span2, .span3, .span4, .span5, .span6, .span7, .span8, .span9, .span10, .span11 { grid-column: span 12; }
 }
 
 /* Cluster Top Bar & Speed Display */
@@ -1263,14 +1271,14 @@ select {
 /* ---------- raw data views (Settings → Raw data) ---------- */
 
 /* live page: full-width value grid + wheels table */
-#raw-panel h2 button {
+#w-raw h2 button, #raw-panel h2 button {
   margin-left: auto;
   font-size: 0.72rem;
   letter-spacing: 0.1em;
   padding: 3px 10px;
   text-transform: uppercase;
 }
-#raw-panel h2 button.on { border-color: var(--accent); color: var(--accent); }
+#w-raw h2 button.on, #raw-panel h2 button.on { border-color: var(--accent); color: var(--accent); }
 .raw-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
@@ -1342,75 +1350,422 @@ body.theme-brutalist {
   --bg: #07090e;
   --panel-hi: #0f131d;
   --panel-lo: #0a0d14;
-  --panel-edge: #232d3f;
+  --panel-edge: #1e2838;
   --accent: #00e5ff;
   --accent-rgb: 0, 229, 255;
   --accent-glow: rgba(0, 229, 255, 0.4);
   --accent-dim: rgba(0, 229, 255, 0.15);
   --good: #00e5ff;
-  --warn: #ffb703;
+  --warn: #ff7575;
   --bad: #ff5252;
   --text: #ffffff;
-  --muted: #7888a0;
+  --muted: #6b7c96;
 }
 
 body.theme-brutalist .app-sidebar {
+  width: 220px;
   background: #06080c;
-  border-right: 2px solid #1e2636;
+  border-right: 2px solid #192230;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 16px 12px;
+}
+
+body.theme-brutalist .brutalist-brand-hdr {
+  padding-bottom: 16px;
+  border-bottom: 1px solid #182232;
+  margin-bottom: 12px;
+}
+
+body.theme-brutalist .proto-title {
+  font-family: var(--display);
+  font-size: 1.5rem;
+  font-weight: 900;
+  color: var(--accent);
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+body.theme-brutalist .proto-title .proto-num {
+  display: block;
+  font-size: 1.6rem;
+  color: var(--text);
+}
+
+body.theme-brutalist .proto-conn {
+  font-family: var(--display);
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: 0.14em;
+  margin-top: 4px;
+}
+
+body.theme-brutalist .sidebar-icon {
+  width: 100%;
+  height: 38px;
+  border-radius: 0;
+  justify-content: flex-start;
+  padding: 0 10px;
+  gap: 10px;
+  color: var(--muted);
+  font-family: var(--display);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+body.theme-brutalist .sidebar-icon.active {
+  background: rgba(0, 229, 255, 0.08);
+  color: var(--accent);
+  border-left: 3px solid var(--accent);
+}
+
+body.theme-brutalist .sb-label {
+  display: inline-block;
+}
+
+body.theme-brutalist .sidebar-mid-btn {
+  margin: 20px 0;
+}
+
+body.theme-brutalist .btn-export-data {
+  width: 100%;
+  height: 44px;
+  background: var(--accent);
+  color: #000000;
+  font-family: var(--display);
+  font-size: 0.85rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  border: none;
+  border-radius: 0;
+  cursor: pointer;
+  box-shadow: 0 0 12px var(--accent-glow);
+  transition: opacity 0.15s ease;
+}
+
+body.theme-brutalist .btn-export-data:hover {
+  opacity: 0.9;
+}
+
+body.theme-brutalist .sidebar-bottom {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-top: 1px solid #182232;
+  padding-top: 14px;
+}
+
+body.theme-brutalist .sb-link {
+  font-family: var(--display);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+body.theme-brutalist .sb-link:hover {
+  color: var(--text);
 }
 
 body.theme-brutalist header {
   background: #06080c;
-  border-bottom: 2px solid #1e2636;
+  border-bottom: 2px solid #192230;
+  padding: 0 20px;
+}
+
+body.theme-brutalist .apex-header-title {
+  display: block;
+  font-family: var(--display);
+  font-size: 1.4rem;
+  font-weight: 900;
+  font-style: italic;
+  color: var(--accent);
+  letter-spacing: -0.03em;
 }
 
 body.theme-brutalist .panel {
   background: #090d15;
-  border: 2px solid #1e2738;
+  border: 2px solid #192230;
   border-radius: 0px;
-  box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.6);
+  box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.7);
+  padding: 16px;
 }
 
-body.theme-brutalist .panel h2, 
-body.theme-brutalist .sub-hdr {
+body.theme-brutalist .speed-italic {
+  font-style: italic;
+  font-weight: 900;
+  font-size: 4.8rem;
+  line-height: 0.9;
+  letter-spacing: -0.04em;
+}
+
+body.theme-brutalist .vel-histogram {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 48px;
+  margin: 12px 0;
+}
+
+body.theme-brutalist .vel-histogram span {
+  flex: 1;
+  background: var(--accent);
+  min-height: 4px;
+}
+
+/* Transmission G4 Block */
+body.theme-brutalist .brutalist-gear-panel {
+  background: #090d15;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+body.theme-brutalist .gear-card-hdr {
+  display: flex;
+  justify-content: space-between;
   font-family: var(--display);
+  font-size: 0.75rem;
   font-weight: 800;
-  letter-spacing: 0.14em;
   color: var(--muted);
-  text-transform: uppercase;
 }
 
-body.theme-brutalist .bar-accent {
+body.theme-brutalist .gear-hero-box {
+  background: var(--accent);
+  color: #000000;
+  height: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--display);
+  font-size: 5rem;
+  font-weight: 900;
+  letter-spacing: -0.05em;
+  margin-top: 10px;
+}
+
+/* Lap Delta Split Display */
+body.theme-brutalist .brutalist-delta-display {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 14px 0;
+}
+
+body.theme-brutalist .lap-cur-split {
+  font-family: var(--display);
+  font-size: 2.8rem;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+}
+
+body.theme-brutalist .lap-cur-split .main-time {
+  color: #ffffff;
+}
+
+body.theme-brutalist .lap-cur-split .sub-time {
   color: var(--accent);
 }
 
-body.theme-brutalist .live-tag {
+body.theme-brutalist .timer-sq-icon {
+  width: 44px;
+  height: 44px;
   background: var(--accent);
   color: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+}
+
+/* Thermal Matrix Cards */
+body.theme-brutalist .thermal-matrix-cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin: 16px 0;
+}
+
+body.theme-brutalist .tm-card {
+  background: #0d131f;
+  border: 1px solid #1b2638;
+  padding: 12px 10px;
+}
+
+body.theme-brutalist .tm-lbl {
+  font-family: var(--display);
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+body.theme-brutalist .tm-val {
+  font-family: var(--display);
+  font-size: 1.8rem;
   font-weight: 900;
-  border: none;
-  border-radius: 0;
+  color: #ffffff;
+  margin-bottom: 8px;
 }
 
-body.theme-brutalist .sector-card {
-  background: #0d121c;
-  border: 1px solid #253147;
-  border-radius: 0;
+body.theme-brutalist .tm-bar-track {
+  height: 4px;
+  background: #182232;
+  width: 100%;
 }
 
-body.theme-brutalist .vbar-track,
-body.theme-brutalist .steer-track {
-  border-radius: 0;
-  border: 1px solid #253147;
+body.theme-brutalist .tm-bar-fill {
+  height: 100%;
+  background: var(--accent);
 }
 
-body.theme-brutalist .vbar-fill {
-  border-radius: 0;
+body.theme-brutalist .tm-bar-fill.warn {
+  background: #ff7575;
 }
 
-body.theme-brutalist .corner-tag {
-  border-radius: 0;
-  border: 1px solid var(--accent);
+body.theme-brutalist .brutalist-alert-banner {
+  background: #ff7575;
+  color: #000000;
+  font-family: var(--display);
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 12px;
+}
+
+/* Battery SOC Block */
+body.theme-brutalist .battery-soc-block {
+  margin: 14px 0 20px;
+}
+
+body.theme-brutalist .soc-pct-hero {
+  font-family: var(--display);
+  font-size: 3.2rem;
+  font-weight: 900;
+  color: #ffffff;
+  line-height: 1;
+}
+
+body.theme-brutalist .soc-blocks-row {
+  display: flex;
+  gap: 4px;
+  margin-top: 10px;
+}
+
+body.theme-brutalist .soc-blocks-row i {
+  height: 16px;
+  flex: 1;
+  border: 1px solid #233148;
+  background: transparent;
+}
+
+body.theme-brutalist .soc-blocks-row i.on {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+/* G-Force Vector Box */
+body.theme-brutalist .g-force-vector-grid {
+  width: 100%;
+  height: 140px;
+  background: #0a0e17;
+  border: 1px solid #1b2638;
+  margin: 12px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+body.theme-brutalist .g-crosshair {
+  width: 80px;
+  height: 80px;
+  border: 1px solid #1c2738;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+body.theme-brutalist .g-dot-vector {
+  width: 8px;
+  height: 8px;
+  background: var(--accent);
+  position: absolute;
+  transition: transform 0.05s linear;
+}
+
+/* Lap History Log Table */
+body.theme-brutalist .lhl-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+  font-family: var(--display);
+}
+
+body.theme-brutalist .lhl-table th {
+  background: #0d131f;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 8px 12px;
+  text-align: left;
+  border-bottom: 2px solid #192230;
+}
+
+body.theme-brutalist .lhl-table td {
+  padding: 10px 12px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  border-bottom: 1px solid #141c2b;
+  color: #ffffff;
+}
+
+body.theme-brutalist .lhl-table td.total-best {
+  background: var(--accent);
+  color: #000000;
+  font-weight: 900;
+}
+
+/* Circuit Map Header Overlay */
+body.theme-brutalist .circuit-hdr-badge {
+  margin-bottom: 8px;
+}
+
+body.theme-brutalist .lt-tag {
+  background: var(--accent);
+  color: #000;
+  font-family: var(--display);
+  font-size: 0.7rem;
+  font-weight: 900;
+  padding: 2px 6px;
+}
+
+body.theme-brutalist .track-title-hero {
+  font-family: var(--display);
+  font-size: 1.6rem;
+  font-weight: 900;
+  font-style: italic;
+  color: #ffffff;
+  margin-top: 4px;
+}
+
+body.theme-brutalist .telemetry-coords-tag {
+  position: absolute;
+  bottom: 8px; right: 8px;
+  background: rgba(0, 0, 0, 0.75);
+  color: var(--accent);
+  font-family: var(--display);
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border: 1px solid #1a2536;
 }
 
 /* ---------- Layout Edit Mode & Controls ---------- */
