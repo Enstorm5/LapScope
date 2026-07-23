@@ -319,8 +319,35 @@ function initWidgetControls() {
   applyLayout();
 }
 
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen().then(() => {
+      document.body.classList.add("immersive-fullscreen");
+    }).catch(err => {
+      document.body.classList.toggle("immersive-fullscreen");
+    });
+  } else {
+    if (document.exitFullscreen) {
+      document.exitFullscreen();
+    }
+    document.body.classList.remove("immersive-fullscreen");
+  }
+}
+
+document.addEventListener("fullscreenchange", () => {
+  const isFS = !!document.fullscreenElement;
+  document.body.classList.toggle("immersive-fullscreen", isFS);
+  const btn = document.getElementById("btn-fullscreen");
+  if (btn) {
+    btn.textContent = isFS ? "✕ EXIT FULLSCREEN" : "⛶ FULLSCREEN";
+    btn.classList.toggle("active", isFS);
+  }
+});
+
 window.addEventListener("load", () => {
   initWidgetControls();
+  const fsBtn = document.getElementById("btn-fullscreen");
+  if (fsBtn) fsBtn.onclick = toggleFullscreen;
   const editBtn = document.getElementById("btn-edit-layout");
   if (editBtn) editBtn.onclick = toggleEditMode;
   const resetBtn = document.getElementById("btn-reset-layout");
